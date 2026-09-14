@@ -35,7 +35,7 @@ ON CONFLICT (name) DO NOTHING;
 -- ----------------------------------------------------------------------------
 -- 3. SEED DEVELOPMENT USERS
 -- Password for all seed users is: Password@123 (bcrypt cost factor 12)
--- Password hash: $2b$12$e8kPq1oZk1wZ1N6eK5Z1eO1q5cQJ6/Q5Lz8s8L0zG0sJ1k5y6L2rS
+-- Password hash: $2b$12$zIwcCxZBxOzVi7ZTQqUucOqlD06bG.0B4Hf2lRe/ZleihxaBIF1ui
 -- ----------------------------------------------------------------------------
 INSERT INTO users (id, first_name, last_name, email, password_hash, role, department_id, employee_id, phone_number, is_active) VALUES
     (
@@ -43,7 +43,7 @@ INSERT INTO users (id, first_name, last_name, email, password_hash, role, depart
         'Abebe',
         'Admin',
         'admin.is@cbe.com.et',
-        '$2b$12$e8kPq1oZk1wZ1N6eK5Z1eO1q5cQJ6/Q5Lz8s8L0zG0sJ1k5y6L2rS',
+        '$2b$12$zIwcCxZBxOzVi7ZTQqUucOqlD06bG.0B4Hf2lRe/ZleihxaBIF1ui',
         'ADMINISTRATOR',
         '11111111-1111-1111-1111-111111111111',
         'CBE-EMP-001',
@@ -55,7 +55,7 @@ INSERT INTO users (id, first_name, last_name, email, password_hash, role, depart
         'Tadesse',
         'Tech',
         'tech.support@cbe.com.et',
-        '$2b$12$e8kPq1oZk1wZ1N6eK5Z1eO1q5cQJ6/Q5Lz8s8L0zG0sJ1k5y6L2rS',
+        '$2b$12$zIwcCxZBxOzVi7ZTQqUucOqlD06bG.0B4Hf2lRe/ZleihxaBIF1ui',
         'TECHNICIAN',
         '11111111-1111-1111-1111-111111111111',
         'CBE-EMP-002',
@@ -67,7 +67,7 @@ INSERT INTO users (id, first_name, last_name, email, password_hash, role, depart
         'Chaltu',
         'Employee',
         'chaltu.finance@cbe.com.et',
-        '$2b$12$e8kPq1oZk1wZ1N6eK5Z1eO1q5cQJ6/Q5Lz8s8L0zG0sJ1k5y6L2rS',
+        '$2b$12$zIwcCxZBxOzVi7ZTQqUucOqlD06bG.0B4Hf2lRe/ZleihxaBIF1ui',
         'EMPLOYEE',
         '22222222-2222-2222-2222-222222222222',
         'CBE-EMP-003',
