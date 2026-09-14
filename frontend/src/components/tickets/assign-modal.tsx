@@ -52,9 +52,10 @@ export function AssignModal({
         setIsLoading(true);
         try {
           const data = await adminApi.getActiveTechnicians();
-          setTechnicians(data);
-          if (data.length > 0 && !selectedTechId) {
-            setSelectedTechId(data[0].id);
+          const safeData = Array.isArray(data) ? data : [];
+          setTechnicians(safeData);
+          if (safeData.length > 0 && !selectedTechId) {
+            setSelectedTechId(safeData[0].id);
           }
         } catch {
           toast.error('Failed to load active technicians.');

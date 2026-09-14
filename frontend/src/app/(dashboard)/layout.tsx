@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -15,6 +15,12 @@ export default function DashboardLayout({
   const { isAuthenticated, isLoading, role } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -22,7 +28,7 @@ export default function DashboardLayout({
     }
   }, [isLoading, isAuthenticated, router]);
 
-  // Route protection for Admin paths
+  // Route protection for Admin & Technician paths
   useEffect(() => {
     if (!isLoading && isAuthenticated && role) {
       if (pathname.startsWith('/admin') && role !== 'ADMINISTRATOR') {
@@ -52,10 +58,16 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-50/70 dark:bg-zinc-950">
-      <Sidebar />
-      <div className="flex flex-col flex-1 min-w-0">
-        <Header />
+    <div className="min-h-screen bg-zinc-50/70 dark:bg-zinc-950">
+      {/* Pinned Desktop Sidebar & Mobile Slide-out Drawer */}
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      />
+
+      {/* Main Content Area offset by the fixed sidebar width on desktop */}
+      <div className="lg:pl-64 flex flex-col min-h-screen min-w-0 transition-[padding] duration-200">
+        <Header onToggleMobileMenu={() => setMobileMenuOpen((prev) => !prev)} />
         <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
           {children}
         </main>

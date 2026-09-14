@@ -10,7 +10,7 @@ import {
   TechnicianWorkload,
 } from '@/types/admin';
 import { PageHeader } from '@/components/shared/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -20,6 +20,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { DonutStatusChart } from '@/components/charts/donut-status-chart';
+import { RadialProgressChart } from '@/components/charts/radial-progress-chart';
+import { CategoryBarChart } from '@/components/charts/category-bar-chart';
+import { DepartmentColumnChart } from '@/components/charts/department-column-chart';
+import { TechnicianWorkloadChart } from '@/components/charts/technician-workload-chart';
+import { ApexProgressBar } from '@/components/charts/apex-progress-bar';
 import { toast } from 'sonner';
 import {
   BarChart3,
@@ -32,6 +38,8 @@ import {
   Users,
   FolderTree,
   Building2,
+  PieChart as PieIcon,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function ReportsDashboardPage() {
@@ -57,9 +65,9 @@ export default function ReportsDashboardPage() {
       ]);
 
       setSummary(sum);
-      setCategories(cats);
-      setDepartments(depts);
-      setTechnicians(techs);
+      setCategories(Array.isArray(cats) ? cats : []);
+      setDepartments(Array.isArray(depts) ? depts : []);
+      setTechnicians(Array.isArray(techs) ? techs : []);
       setPerformance(perf);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to load report analytics');
@@ -84,11 +92,27 @@ export default function ReportsDashboardPage() {
     );
   }
 
+  const donutData = {
+    open: summary?.openTickets ?? 0,
+    assigned: summary?.assignedTickets ?? 0,
+    inProgress: summary?.inProgressTickets ?? 0,
+    resolved: summary?.resolvedTickets ?? 0,
+    closed: summary?.closedTickets ?? 0,
+    cancelled: summary?.cancelledTickets ?? 0,
+  };
+
+  const resolutionRate = summary?.resolutionRatePercent ?? 0;
+  const slaComplianceRate = performance?.withinSlaPercent ?? 85;
+
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeDepartments = Array.isArray(departments) ? departments : [];
+  const safeTechnicians = Array.isArray(technicians) ? technicians : [];
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Executive Analytics & SLA Performance"
-        description="Comprehensive operational metrics across Information Systems infrastructure and branch incidents."
+        description="Interactive visual analytics powered by ApexCharts across Information Systems infrastructure and CBE branches."
       >
         <Button
           variant="outline"
@@ -98,7 +122,7 @@ export default function ReportsDashboardPage() {
           className="text-xs"
         >
           <RefreshCw className={`size-3.5 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh Data
+          Refresh Charts
         </Button>
       </PageHeader>
 
@@ -131,7 +155,7 @@ export default function ReportsDashboardPage() {
               {summary?.inProgressTickets ?? 0}
             </div>
             <p className="text-[11px] text-amber-700/70 dark:text-amber-400/80 mt-1">
-              Under active investigation
+              Under active troubleshooting
             </p>
           </CardContent>
         </Card>
@@ -162,106 +186,154 @@ export default function ReportsDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-emerald-800 dark:text-emerald-300">
-              {summary?.resolutionRatePercent ?? 0}%
+              {resolutionRate}%
             </div>
             <p className="text-[11px] text-emerald-700/70 dark:text-emerald-400/80 mt-1">
-              {summary?.resolvedTickets ?? 0} tickets successfully resolved
+              {summary?.resolvedTickets ?? 0} tickets resolved
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Two Columns: Category Breakdown & Department Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Incident Distribution by Category */}
-        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <FolderTree className="size-4 text-[#6f1a7e]" />
-              Distribution by Incident Category
-            </CardTitle>
-            <span className="text-xs text-zinc-400">{categories.length} Categories</span>
+      {/* Row 1: ApexCharts Status Donut & Radial Progress Gauges */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Ticket Lifecycle Status Donut Chart */}
+        <Card className="lg:col-span-7 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <PieIcon className="size-4 text-[#6f1a7e]" />
+                  Ticket Lifecycle Status Distribution
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Proportional distribution of tickets across all lifecycle stages.
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {categories.length === 0 ? (
-              <p className="text-xs text-zinc-400 italic">No category data recorded yet.</p>
-            ) : (
-              categories.map((cat) => (
-                <div key={cat.categoryId} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {cat.categoryName}
-                    </span>
-                    <span className="text-zinc-500 font-mono">
-                      {cat.count} ({cat.percentage}%)
-                    </span>
-                  </div>
-                  {/* Progress bar */}
-                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-[#6f1a7e] dark:bg-purple-500 transition-all duration-500"
-                      style={{ width: `${Math.min(cat.percentage, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
+          <CardContent className="pt-2">
+            <DonutStatusChart data={donutData} height={290} />
           </CardContent>
         </Card>
 
-        {/* Volume by Requesting Department */}
-        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        {/* ApexCharts Radial Gauges & SLA Progress */}
+        <Card className="lg:col-span-5 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Building2 className="size-4 text-[#6f1a7e]" />
-              Incident Volume by Department
+              <ShieldCheck className="size-4 text-emerald-600" />
+              SLA & Resolution Progress
             </CardTitle>
-            <span className="text-xs text-zinc-400">{departments.length} Departments</span>
+            <CardDescription className="text-xs">
+              Key performance indicators benchmarked against bank service levels.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {departments.length === 0 ? (
-              <p className="text-xs text-zinc-400 italic">No departmental incident data yet.</p>
-            ) : (
-              departments.map((dept) => (
-                <div key={dept.departmentId} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {dept.departmentName}
-                    </span>
-                    <span className="text-zinc-500 font-mono">
-                      {dept.count} ({dept.percentage}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-amber-500 dark:bg-amber-400 transition-all duration-500"
-                      style={{ width: `${Math.min(dept.percentage, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
+          <CardContent className="pt-2 space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <RadialProgressChart
+                value={resolutionRate}
+                label="Resolution"
+                color="#10b981"
+                height={180}
+                sublabel={`${summary?.resolvedTickets ?? 0} of ${summary?.totalTickets ?? 0} solved`}
+              />
+              <RadialProgressChart
+                value={slaComplianceRate}
+                label="SLA Compliance"
+                color="#6f1a7e"
+                height={180}
+                sublabel={
+                  performance
+                    ? `Avg ${performance.avgResolutionHours} hrs`
+                    : 'Target < 24h SLA'
+                }
+              />
+            </div>
+
+            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
+              <ApexProgressBar
+                value={resolutionRate}
+                label="Overall Resolution Progress"
+                color="#10b981"
+                height={32}
+              />
+              <ApexProgressBar
+                value={slaComplianceRate}
+                label="Response SLA On-Time Rate"
+                color="#6f1a7e"
+                height={32}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Technician Workload & Performance Table */}
+      {/* Row 2: Category Breakdown & Department Incident Volume */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Category Horizontal Bar Chart */}
+        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <FolderTree className="size-4 text-[#6f1a7e]" />
+                Incident Distribution by Category
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Malfunction density categorized across bank infrastructure.
+              </CardDescription>
+            </div>
+            <span className="text-xs text-zinc-400 font-mono">{safeCategories.length} Categories</span>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <CategoryBarChart categories={safeCategories} height={280} />
+          </CardContent>
+        </Card>
+
+        {/* Department Volume Column Bar Chart */}
+        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Building2 className="size-4 text-[#edb72b]" />
+                Incident Volume by Requesting Department
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Incident generation frequency per branch and head office directorate.
+              </CardDescription>
+            </div>
+            <span className="text-xs text-zinc-400 font-mono">{safeDepartments.length} Units</span>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <DepartmentColumnChart departments={safeDepartments} height={280} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Row 3: Technician Workload Grouped Bar Chart & Performance Matrix */}
       <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <Users className="size-4 text-[#6f1a7e]" />
-            IS Technician Workload & Resolution Metrics
-          </CardTitle>
+          <div>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Users className="size-4 text-[#6f1a7e]" />
+              IS Technician Workload & Performance Comparison
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Comparative analysis of assignments, active troubleshooting, and verified resolutions.
+            </CardDescription>
+          </div>
           {performance && (
             <span className="text-xs text-zinc-500">
-              Avg Resolution: <strong className="text-zinc-800 dark:text-zinc-200">{performance.avgResolutionHours} hrs</strong>
+              Avg Resolution Time:{' '}
+              <strong className="text-zinc-800 dark:text-zinc-200 font-mono">
+                {performance.avgResolutionHours} hrs
+              </strong>
             </span>
           )}
         </CardHeader>
-        <CardContent>
-          {technicians.length === 0 ? (
-            <p className="text-xs text-zinc-400 italic">No technician assignments on record.</p>
-          ) : (
+        <CardContent className="space-y-6">
+          <TechnicianWorkloadChart technicians={safeTechnicians} height={280} />
+
+          {safeTechnicians.length > 0 && (
             <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
               <Table>
                 <TableHeader className="bg-zinc-50/70 dark:bg-zinc-900/60">
@@ -270,12 +342,12 @@ export default function ReportsDashboardPage() {
                     <TableHead className="text-xs font-semibold text-center">Total Assigned</TableHead>
                     <TableHead className="text-xs font-semibold text-center">In Progress</TableHead>
                     <TableHead className="text-xs font-semibold text-center">Resolved</TableHead>
-                    <TableHead className="text-xs font-semibold text-right">Performance</TableHead>
+                    <TableHead className="text-xs font-semibold text-right">Completion Rate</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {technicians.map((t) => {
-                    const resolvedRate =
+                  {safeTechnicians.map((t) => {
+                    const rate =
                       t.assignedCount > 0
                         ? Math.round((t.resolvedCount / t.assignedCount) * 100)
                         : 0;
@@ -300,7 +372,7 @@ export default function ReportsDashboardPage() {
                         <TableCell className="text-right text-xs">
                           <span className="inline-flex items-center gap-1 font-mono text-xs font-medium text-emerald-700 dark:text-emerald-400">
                             <CheckCircle className="size-3" />
-                            {resolvedRate}%
+                            {rate}%
                           </span>
                         </TableCell>
                       </TableRow>

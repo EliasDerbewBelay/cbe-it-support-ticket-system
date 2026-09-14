@@ -99,7 +99,7 @@ export default function AuditLogsPage() {
           </div>
         </div>
 
-        <span className="text-xs text-zinc-400 font-mono">{logs.length} logged events</span>
+        <span className="text-xs text-zinc-400 font-mono">{logs?.length || 0} logged events</span>
       </div>
 
       {isLoading ? (
@@ -107,7 +107,7 @@ export default function AuditLogsPage() {
           <Loader2 className="size-6 animate-spin text-[#6f1a7e]" />
           <span className="text-xs text-zinc-500 mt-2 font-medium">Reading audit journal...</span>
         </div>
-      ) : logs.length === 0 ? (
+      ) : !logs || logs.length === 0 ? (
         <EmptyState
           icon={History}
           title="No audit events found"

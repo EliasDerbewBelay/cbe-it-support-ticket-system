@@ -12,8 +12,11 @@ import { TicketTable } from '@/components/tickets/ticket-table';
 import { TicketFilters } from '@/components/tickets/ticket-filters';
 import { EmptyState } from '@/components/shared/empty-state';
 import { AssignModal } from '@/components/tickets/assign-modal';
+import { RadialProgressChart } from '@/components/charts/radial-progress-chart';
+import { ApexProgressBar } from '@/components/charts/apex-progress-bar';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, RefreshCw } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PlusCircle, Loader2, RefreshCw, BarChart2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function TicketsPage() {
@@ -22,6 +25,7 @@ export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   // Filters state
   const [search, setSearch] = useState('');
@@ -52,7 +56,7 @@ export default function TicketsPage() {
           result = await ticketApi.getAllTickets(filters);
         }
 
-        setTickets(result.tickets || []);
+        setTickets(Array.isArray(result?.tickets) ? result.tickets : []);
       } catch (err: any) {
         toast.error(err?.message || 'Failed to fetch tickets');
       } finally {
@@ -74,10 +78,15 @@ export default function TicketsPage() {
   };
 
   // Quick stats summary
-  const totalCount = tickets.length;
-  const openCount = tickets.filter((t) => t.status === 'OPEN' || t.status === 'ASSIGNED').length;
-  const inProgressCount = tickets.filter((t) => t.status === 'IN_PROGRESS').length;
-  const resolvedCount = tickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
+  const safeTickets = Array.isArray(tickets) ? tickets : [];
+  const totalCount = safeTickets.length;
+  const openCount = safeTickets.filter((t) => t.status === 'OPEN' || t.status === 'ASSIGNED').length;
+  const inProgressCount = safeTickets.filter((t) => t.status === 'IN_PROGRESS').length;
+  const resolvedCount = safeTickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
+
+  const resolutionRate = totalCount > 0 ? Math.round((resolvedCount / totalCount) * 100) : 0;
+  const inProgressRate = totalCount > 0 ? Math.round((inProgressCount / totalCount) * 100) : 0;
+  const openRate = totalCount > 0 ? Math.round((openCount / totalCount) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -89,6 +98,16 @@ export default function TicketsPage() {
             : 'Comprehensive institutional repository of all bank IT incidents, troubleshooting logs, and resolutions.'
         }
       >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAnalysis(!showAnalysis)}
+          className="text-xs"
+        >
+          <BarChart2 className="size-3.5 mr-1.5 text-purple-600" />
+          {showAnalysis ? 'Hide Analysis' : 'Show Analysis'}
+        </Button>
+
         <Button
           variant="outline"
           size="sm"
@@ -134,6 +153,55 @@ export default function TicketsPage() {
         </div>
       </div>
 
+      {/* ApexCharts Analysis Panel */}
+      {showAnalysis && (
+        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <BarChart2 className="size-4 text-[#6f1a7e]" />
+              Ticket Resolution & Lifecycle Analysis
+            </CardTitle>
+            <CardDescription className="text-xs">
+              ApexCharts visual progress breakdown for currently tracked incidents.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div className="md:col-span-4 flex flex-col items-center justify-center p-2 border-r-0 md:border-r border-zinc-100 dark:border-zinc-800">
+                <RadialProgressChart
+                  value={resolutionRate}
+                  label="Resolved Ratio"
+                  color="#10b981"
+                  height={190}
+                  sublabel={`${resolvedCount} of ${totalCount} closed/resolved`}
+                />
+              </div>
+
+              <div className="md:col-span-8 space-y-3.5">
+                <ApexProgressBar
+                  value={resolutionRate}
+                  label="Resolved & Closed Incidents"
+                  color="#10b981"
+                  height={30}
+                />
+                <ApexProgressBar
+                  value={inProgressRate}
+                  label="Active Investigation (In Progress)"
+                  color="#f59e0b"
+                  height={30}
+                />
+                <ApexProgressBar
+                  value={openRate}
+                  label="Pending Helpdesk Assignment (Open / Assigned)"
+                  color="#3b82f6"
+                  height={30}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters Bar */}
       <TicketFilters
         search={search}
@@ -153,7 +221,7 @@ export default function TicketsPage() {
           <Loader2 className="size-6 animate-spin text-[#6f1a7e]" />
           <span className="text-xs text-zinc-500 mt-2 font-medium">Loading ticket database...</span>
         </div>
-      ) : tickets.length === 0 ? (
+      ) : safeTickets.length === 0 ? (
         <EmptyState
           title="No incidents found"
           description={
@@ -166,13 +234,13 @@ export default function TicketsPage() {
         />
       ) : viewMode === 'table' ? (
         <TicketTable
-          tickets={tickets}
+          tickets={safeTickets}
           isAdmin={isAdmin}
           onAssignClick={(t) => setAssignTarget(t)}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tickets.map((t) => (
+          {safeTickets.map((t) => (
             <TicketCard key={t.id} ticket={t} />
           ))}
         </div>

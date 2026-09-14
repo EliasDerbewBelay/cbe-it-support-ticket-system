@@ -47,24 +47,26 @@ export function CommentsSection({
     }
   };
 
+  const safeComments = Array.isArray(comments) ? comments : [];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
           <MessageSquare className="size-4 text-zinc-500" />
           <span>Discussion & Diagnostic Notes</span>
-          <span className="text-xs font-normal text-zinc-400">({comments.length})</span>
+          <span className="text-xs font-normal text-zinc-400">({safeComments.length})</span>
         </h3>
       </div>
 
       {/* List of comments */}
       <div className="space-y-3">
-        {comments.length === 0 ? (
+        {safeComments.length === 0 ? (
           <div className="p-4 text-center rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500">
             No updates posted on this ticket yet.
           </div>
         ) : (
-          comments.map((comment) => {
+          safeComments.map((comment) => {
             const authorName = comment.author
               ? `${comment.author.firstName || comment.author.first_name || ''} ${
                   comment.author.lastName || comment.author.last_name || ''

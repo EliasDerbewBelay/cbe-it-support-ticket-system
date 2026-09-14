@@ -74,10 +74,11 @@ export default function UsersAdminPage() {
         }),
         adminApi.getDepartments(true),
       ]);
-      setUsers(userData.users || []);
-      setDepartments(deptData);
-      if (deptData.length > 0 && !departmentId) {
-        setDepartmentId(deptData[0].id);
+      const safeDepts = Array.isArray(deptData) ? deptData : [];
+      setUsers(Array.isArray(userData?.users) ? userData.users : []);
+      setDepartments(safeDepts);
+      if (safeDepts.length > 0 && !departmentId) {
+        setDepartmentId(safeDepts[0].id);
       }
     } catch (err: any) {
       toast.error(err?.message || 'Failed to load user accounts');

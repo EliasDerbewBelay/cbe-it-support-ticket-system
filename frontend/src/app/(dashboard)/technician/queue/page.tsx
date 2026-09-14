@@ -8,8 +8,11 @@ import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { PriorityBadge } from '@/components/shared/priority-badge';
 import { ResolveModal } from '@/components/tickets/resolve-modal';
+import { RadialProgressChart } from '@/components/charts/radial-progress-chart';
+import { ApexProgressBar } from '@/components/charts/apex-progress-bar';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -29,6 +32,7 @@ import {
   Loader2,
   ChevronRight,
   RefreshCw,
+  BarChart2,
 } from 'lucide-react';
 
 export default function TechnicianQueuePage() {
@@ -37,6 +41,7 @@ export default function TechnicianQueuePage() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(true);
 
   // Quick Resolve modal
   const [resolveTarget, setResolveTarget] = useState<Ticket | null>(null);
@@ -74,17 +79,46 @@ export default function TechnicianQueuePage() {
     }
   };
 
-  const filteredTickets = assignedTickets.filter((t) => {
+  const safeAssigned = Array.isArray(assignedTickets) ? assignedTickets : [];
+
+  const filteredTickets = safeAssigned.filter((t) => {
     if (statusFilter === 'ALL') return true;
     return t.status === statusFilter;
   });
+
+  const totalAssigned = summary?.assignedTotal ?? safeAssigned.length;
+  const resolvedCount =
+    summary?.resolvedToday ??
+    safeAssigned.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
+  const inProgressCount =
+    summary?.inProgress ?? safeAssigned.filter((t) => t.status === 'IN_PROGRESS').length;
+  const criticalCount =
+    summary?.criticalPending ??
+    safeAssigned.filter(
+      (t) => t.priority === 'CRITICAL' && t.status !== 'RESOLVED' && t.status !== 'CLOSED'
+    ).length;
+
+  const resolutionRate =
+    totalAssigned > 0 ? Math.round((resolvedCount / totalAssigned) * 100) : 0;
+  const inProgressRate =
+    totalAssigned > 0 ? Math.round((inProgressCount / totalAssigned) * 100) : 0;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Technician Work Queue"
-        description="Assigned incident queue and active troubleshooting assignments."
+        description="Assigned incident queue, active troubleshooting assignments, and performance analysis."
       >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAnalysis(!showAnalysis)}
+          className="text-xs"
+        >
+          <BarChart2 className="size-3.5 mr-1.5 text-purple-600" />
+          {showAnalysis ? 'Hide Analysis' : 'Show Analysis'}
+        </Button>
+
         <Button
           variant="outline"
           size="sm"
@@ -104,9 +138,7 @@ export default function TechnicianQueuePage() {
             <span className="text-xs font-medium uppercase tracking-wider">Assigned Total</span>
             <Wrench className="size-4 text-purple-600" />
           </div>
-          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            {summary?.assignedTotal ?? assignedTickets.length}
-          </p>
+          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalAssigned}</p>
         </div>
 
         <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-950/20 shadow-2xs">
@@ -114,9 +146,7 @@ export default function TechnicianQueuePage() {
             <span className="text-xs font-medium uppercase tracking-wider">In Progress</span>
             <Clock className="size-4" />
           </div>
-          <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">
-            {summary?.inProgress ?? assignedTickets.filter((t) => t.status === 'IN_PROGRESS').length}
-          </p>
+          <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{inProgressCount}</p>
         </div>
 
         <div className="p-4 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/40 dark:bg-red-950/20 shadow-2xs">
@@ -124,12 +154,7 @@ export default function TechnicianQueuePage() {
             <span className="text-xs font-medium uppercase tracking-wider">Critical Pending</span>
             <AlertTriangle className="size-4" />
           </div>
-          <p className="text-2xl font-bold text-red-700 dark:text-red-400">
-            {summary?.criticalPending ??
-              assignedTickets.filter(
-                (t) => t.priority === 'CRITICAL' && t.status !== 'RESOLVED' && t.status !== 'CLOSED'
-              ).length}
-          </p>
+          <p className="text-2xl font-bold text-red-700 dark:text-red-400">{criticalCount}</p>
         </div>
 
         <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-2xs">
@@ -137,12 +162,60 @@ export default function TechnicianQueuePage() {
             <span className="text-xs font-medium uppercase tracking-wider">Resolved</span>
             <CheckCircle2 className="size-4" />
           </div>
-          <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-            {summary?.resolvedToday ??
-              assignedTickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length}
-          </p>
+          <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{resolvedCount}</p>
         </div>
       </div>
+
+      {/* Technician ApexCharts Analysis Section */}
+      {showAnalysis && (
+        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <BarChart2 className="size-4 text-[#6f1a7e]" />
+              Technician Resolution & Workload Progress Analysis
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Real-time progress monitoring powered by ApexCharts for assigned workload.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              {/* Radial Progress Gauge */}
+              <div className="md:col-span-4 flex flex-col items-center justify-center p-2 border-r-0 md:border-r border-zinc-100 dark:border-zinc-800">
+                <RadialProgressChart
+                  value={resolutionRate}
+                  label="Workload Done"
+                  color="#10b981"
+                  height={200}
+                  sublabel={`${resolvedCount} of ${totalAssigned} resolved`}
+                />
+              </div>
+
+              {/* Progress Bars Breakdown */}
+              <div className="md:col-span-8 space-y-4">
+                <ApexProgressBar
+                  value={resolutionRate}
+                  label="Resolved Incident Rate"
+                  color="#10b981"
+                  height={32}
+                />
+                <ApexProgressBar
+                  value={inProgressRate}
+                  label="Currently In Progress"
+                  color="#f59e0b"
+                  height={32}
+                />
+                <ApexProgressBar
+                  value={totalAssigned > 0 ? Math.round(((totalAssigned - inProgressCount - resolvedCount) / totalAssigned) * 100) : 0}
+                  label="Queued / Awaiting Triage"
+                  color="#3b82f6"
+                  height={32}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-1 border-b border-zinc-200 dark:border-zinc-800 pb-2">

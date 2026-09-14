@@ -39,9 +39,10 @@ export default function NewTicketPage() {
     const loadCategories = async () => {
       try {
         const data = await adminApi.getCategories(false);
-        setCategories(data);
-        if (data.length > 0) {
-          setCategoryId(data[0].id);
+        const safeData = Array.isArray(data) ? data : [];
+        setCategories(safeData);
+        if (safeData.length > 0) {
+          setCategoryId(safeData[0].id);
         }
       } catch {
         toast.error('Failed to load incident categories.');

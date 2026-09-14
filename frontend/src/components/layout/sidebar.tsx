@@ -16,167 +16,284 @@ import {
   CheckCircle2,
   LogOut,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import { RoleBadge } from '../shared/role-badge';
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+interface SidebarItem {
+  title: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
+  badge?: string;
+}
+
+interface SidebarSection {
+  groupTitle: string;
+  items: SidebarItem[];
+}
+
+export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, role, logout } = useAuth();
 
-  const employeeLinks = [
+  const employeeSections: SidebarSection[] = [
     {
-      title: 'My Tickets',
-      href: '/tickets',
-      icon: Ticket,
-      active: pathname === '/tickets',
-    },
-    {
-      title: 'Submit Ticket',
-      href: '/tickets/new',
-      icon: PlusCircle,
-      active: pathname === '/tickets/new',
-    },
-  ];
-
-  const technicianLinks = [
-    {
-      title: 'Assigned Queue',
-      href: '/technician/queue',
-      icon: CheckCircle2,
-      active: pathname === '/technician/queue',
-    },
-    {
-      title: 'All Tickets',
-      href: '/tickets',
-      icon: Ticket,
-      active: pathname === '/tickets' || (pathname.startsWith('/tickets/') && pathname !== '/tickets/new'),
+      groupTitle: 'Incident Management',
+      items: [
+        {
+          title: 'My Tickets',
+          href: '/tickets',
+          icon: Ticket,
+          active: pathname === '/tickets',
+        },
+        {
+          title: 'Submit Ticket',
+          href: '/tickets/new',
+          icon: PlusCircle,
+          active: pathname === '/tickets/new',
+          badge: 'New',
+        },
+      ],
     },
   ];
 
-  const adminLinks = [
+  const technicianSections: SidebarSection[] = [
     {
-      title: 'Analytics & Reports',
-      href: '/admin/reports',
-      icon: BarChart3,
-      active: pathname === '/admin/reports',
-    },
-    {
-      title: 'Tickets Management',
-      href: '/tickets',
-      icon: Ticket,
-      active: pathname === '/tickets' || (pathname.startsWith('/tickets/') && pathname !== '/tickets/new'),
-    },
-    {
-      title: 'Create Ticket',
-      href: '/tickets/new',
-      icon: PlusCircle,
-      active: pathname === '/tickets/new',
-    },
-    {
-      title: 'Users Administration',
-      href: '/admin/users',
-      icon: Users,
-      active: pathname.startsWith('/admin/users'),
-    },
-    {
-      title: 'Departments',
-      href: '/admin/departments',
-      icon: Building2,
-      active: pathname.startsWith('/admin/departments'),
-    },
-    {
-      title: 'Categories',
-      href: '/admin/categories',
-      icon: FolderTree,
-      active: pathname.startsWith('/admin/categories'),
-    },
-    {
-      title: 'Audit Logs',
-      href: '/admin/audit-logs',
-      icon: History,
-      active: pathname.startsWith('/admin/audit-logs'),
+      groupTitle: 'Engineering Workbench',
+      items: [
+        {
+          title: 'Assigned Queue',
+          href: '/technician/queue',
+          icon: CheckCircle2,
+          active: pathname === '/technician/queue',
+          badge: 'Active',
+        },
+        {
+          title: 'All Tickets',
+          href: '/tickets',
+          icon: Ticket,
+          active: pathname === '/tickets' || (pathname.startsWith('/tickets/') && pathname !== '/tickets/new'),
+        },
+        {
+          title: 'Submit Ticket',
+          href: '/tickets/new',
+          icon: PlusCircle,
+          active: pathname === '/tickets/new',
+        },
+      ],
     },
   ];
 
-  const navLinks =
+  const adminSections: SidebarSection[] = [
+    {
+      groupTitle: 'Operations & Analytics',
+      items: [
+        {
+          title: 'Executive Analytics',
+          href: '/admin/reports',
+          icon: BarChart3,
+          active: pathname === '/admin/reports',
+        },
+        {
+          title: 'Tickets Directory',
+          href: '/tickets',
+          icon: Ticket,
+          active: pathname === '/tickets' || (pathname.startsWith('/tickets/') && pathname !== '/tickets/new'),
+        },
+        {
+          title: 'Log New Incident',
+          href: '/tickets/new',
+          icon: PlusCircle,
+          active: pathname === '/tickets/new',
+        },
+      ],
+    },
+    {
+      groupTitle: 'Institutional Administration',
+      items: [
+        {
+          title: 'User Management',
+          href: '/admin/users',
+          icon: Users,
+          active: pathname.startsWith('/admin/users'),
+        },
+        {
+          title: 'Branch & Departments',
+          href: '/admin/departments',
+          icon: Building2,
+          active: pathname.startsWith('/admin/departments'),
+        },
+        {
+          title: 'Category Taxonomy',
+          href: '/admin/categories',
+          icon: FolderTree,
+          active: pathname.startsWith('/admin/categories'),
+        },
+        {
+          title: 'System Audit Logs',
+          href: '/admin/audit-logs',
+          icon: History,
+          active: pathname.startsWith('/admin/audit-logs'),
+        },
+      ],
+    },
+  ];
+
+  const sections =
     role === 'ADMINISTRATOR'
-      ? adminLinks
+      ? adminSections
       : role === 'TECHNICIAN'
-      ? technicianLinks
-      : employeeLinks;
+      ? technicianSections
+      : employeeSections;
 
-  return (
-    <aside className="hidden lg:flex flex-col w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 select-none">
+  const renderSidebarContent = (isMobile = false) => (
+    <div className="flex flex-col h-full select-none">
       {/* Brand Header */}
-      <div className="flex items-center gap-3 px-6 h-16 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-center size-9 rounded-lg bg-[#6f1a7e] text-white font-bold text-base shadow-xs">
-          CBE
-        </div>
-        <div className="flex flex-col min-w-0">
-          <span className="font-semibold text-sm tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
-            IT Service Desk
-          </span>
-          <span className="text-[11px] text-zinc-500 truncate">Commercial Bank of Ethiopia</span>
-        </div>
+      <div className="flex items-center justify-between px-5 h-16 shrink-0 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
+        <Link
+          href="/tickets"
+          onClick={isMobile ? onClose : undefined}
+          className="flex items-center gap-3 transition-opacity hover:opacity-90"
+        >
+          <div className="flex items-center justify-center size-9 rounded-xl bg-gradient-to-br from-[#6f1a7e] to-[#561361] text-white font-black text-sm shadow-xs ring-1 ring-purple-900/20">
+            CBE
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold text-sm tracking-tight text-zinc-900 dark:text-zinc-100 truncate flex items-center gap-1.5">
+              IT Service Desk
+            </span>
+            <span className="text-[11px] text-zinc-500 truncate font-normal">
+              Commercial Bank of Ethiopia
+            </span>
+          </div>
+        </Link>
+
+        {isMobile && (
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="size-5" />
+          </button>
+        )}
       </div>
 
-      {/* Navigation Sections */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <div className="px-3 pb-2 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-          Navigation
-        </div>
-        {navLinks.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors group',
-                item.active
-                  ? 'bg-zinc-100 dark:bg-zinc-900 text-[#6f1a7e] dark:text-purple-400 font-semibold'
-                  : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-900/60'
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <Icon
-                  className={cn(
-                    'size-4.5 shrink-0 transition-colors',
-                    item.active
-                      ? 'text-[#6f1a7e] dark:text-purple-400'
-                      : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200'
-                  )}
-                />
-                <span>{item.title}</span>
-              </div>
-              {item.active && <ChevronRight className="size-3.5 opacity-70" />}
-            </Link>
-          );
-        })}
+      {/* Navigation Groups */}
+      <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6 [scrollbar-width:thin]">
+        {sections.map((section, idx) => (
+          <div key={idx} className="space-y-1">
+            <div className="px-2.5 pb-1.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+              {section.groupTitle}
+            </div>
+            <div className="space-y-0.5">
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={isMobile ? onClose : undefined}
+                    className={cn(
+                      'flex items-center justify-between px-2.5 py-2 text-xs font-medium rounded-lg transition-all group',
+                      item.active
+                        ? 'bg-purple-50 dark:bg-purple-950/40 text-[#6f1a7e] dark:text-purple-300 font-semibold shadow-2xs'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-900'
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon
+                        className={cn(
+                          'size-4 shrink-0 transition-colors',
+                          item.active
+                            ? 'text-[#6f1a7e] dark:text-purple-400'
+                            : 'text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300'
+                        )}
+                      />
+                      <span className="truncate">{item.title}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {item.badge && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-[#6f1a7e]/10 text-[#6f1a7e] dark:bg-purple-900/30 dark:text-purple-300 rounded-md">
+                          {item.badge}
+                        </span>
+                      )}
+                      {item.active && (
+                        <ChevronRight className="size-3 text-[#6f1a7e] dark:text-purple-400 opacity-80" />
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* User Session Footer */}
-      <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40">
-        <div className="p-2.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-              {user ? `${user.firstName} ${user.lastName}` : 'Guest User'}
-            </span>
-            {role && <RoleBadge role={role} />}
+      <div className="shrink-0 p-3 border-t border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/60 dark:bg-zinc-900/40">
+        <div className="p-2.5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xs">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="size-7 rounded-full bg-[#6f1a7e]/10 text-[#6f1a7e] dark:bg-purple-900/30 dark:text-purple-300 font-bold text-xs flex items-center justify-center shrink-0 border border-[#6f1a7e]/20">
+                {user?.firstName?.charAt(0) || 'U'}
+              </div>
+              <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                {user ? `${user.firstName} ${user.lastName}` : 'Staff User'}
+              </span>
+            </div>
+            {role && <RoleBadge role={role} className="scale-90 origin-right" />}
           </div>
-          <p className="text-[11px] text-zinc-500 truncate mb-3">
+
+          <p className="text-[11px] text-zinc-500 truncate mb-2.5 pl-0.5">
             {user?.department?.name || user?.email}
           </p>
 
           <button
-            onClick={() => logout()}
-            className="flex items-center justify-center gap-2 w-full py-1.5 px-2 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30 rounded border border-transparent hover:border-rose-200 transition-colors"
+            onClick={() => {
+              if (isMobile && onClose) onClose();
+              logout();
+            }}
+            className="flex items-center justify-center gap-1.5 w-full py-1.5 px-2 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30 rounded-lg border border-transparent hover:border-rose-200/60 dark:hover:border-rose-900/40 transition-colors"
           >
             <LogOut className="size-3.5" />
-            <span>Sign Out</span>
+            <span>Sign Out Session</span>
           </button>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Fixed Desktop Sidebar */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 flex-col w-64 h-dvh border-r border-zinc-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-950 shadow-xs">
+        {renderSidebarContent(false)}
+      </aside>
+
+      {/* Mobile Slide-over Drawer & Backdrop */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+
+          {/* Drawer Panel */}
+          <aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-72 h-dvh bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 shadow-2xl animate-in slide-in-from-left duration-250">
+            {renderSidebarContent(true)}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }
