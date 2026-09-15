@@ -14,11 +14,9 @@ import {
   FolderTree,
   History,
   CheckCircle2,
-  LogOut,
   ChevronRight,
   X,
 } from 'lucide-react';
-import { RoleBadge } from '../shared/role-badge';
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -40,7 +38,7 @@ interface SidebarSection {
 
 export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user, role, logout } = useAuth();
+  const { role } = useAuth();
 
   const employeeSections: SidebarSection[] = [
     {
@@ -235,38 +233,6 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* User Session Footer */}
-      <div className="shrink-0 p-3 border-t border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/60 dark:bg-zinc-900/40">
-        <div className="p-2.5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xs">
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="size-7 rounded-full bg-[#6f1a7e]/10 text-[#6f1a7e] dark:bg-purple-900/30 dark:text-purple-300 font-bold text-xs flex items-center justify-center shrink-0 border border-[#6f1a7e]/20">
-                {user?.firstName?.charAt(0) || 'U'}
-              </div>
-              <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                {user ? `${user.firstName} ${user.lastName}` : 'Staff User'}
-              </span>
-            </div>
-            {role && <RoleBadge role={role} className="scale-90 origin-right" />}
-          </div>
-
-          <p className="text-[11px] text-zinc-500 truncate mb-2.5 pl-0.5">
-            {user?.department?.name || user?.email}
-          </p>
-
-          <button
-            onClick={() => {
-              if (isMobile && onClose) onClose();
-              logout();
-            }}
-            className="flex items-center justify-center gap-1.5 w-full py-1.5 px-2 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30 rounded-lg border border-transparent hover:border-rose-200/60 dark:hover:border-rose-900/40 transition-colors"
-          >
-            <LogOut className="size-3.5" />
-            <span>Sign Out Session</span>
-          </button>
-        </div>
       </div>
     </div>
   );
