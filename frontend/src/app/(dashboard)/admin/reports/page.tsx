@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { adminApi } from '@/lib/api/admin';
 import {
   CategoryDistribution,
@@ -8,6 +9,7 @@ import {
   PerformanceMetrics,
   SystemReportSummary,
   TechnicianWorkload,
+  AuditLogItem,
 } from '@/types/admin';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,6 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { RoleBadge } from '@/components/shared/role-badge';
+import { formatDate, formatRelativeTime } from '@/lib/utils';
 import { DonutStatusChart } from '@/components/charts/donut-status-chart';
 import { RadialProgressChart } from '@/components/charts/radial-progress-chart';
 import { CategoryBarChart } from '@/components/charts/category-bar-chart';
@@ -40,6 +45,9 @@ import {
   Building2,
   PieChart as PieIcon,
   ShieldCheck,
+  Activity,
+  ArrowRight,
+  Radio,
 } from 'lucide-react';
 
 export default function ReportsDashboardPage() {
@@ -48,20 +56,26 @@ export default function ReportsDashboardPage() {
   const [departments, setDepartments] = useState<DepartmentDistribution[]>([]);
   const [technicians, setTechnicians] = useState<TechnicianWorkload[]>([]);
   const [performance, setPerformance] = useState<PerformanceMetrics | null>(null);
+  const [recentActivities, setRecentActivities] = useState<AuditLogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const loadAllReports = useCallback(async (showRefresh = false) => {
-    if (showRefresh) setIsRefreshing(true);
-    else setIsLoading(true);
+  const loadAllReports = useCallback(async (showRefresh = false, quiet = false) => {
+    if (!quiet) {
+      if (showRefresh) setIsRefreshing(true);
+      else setIsLoading(true);
+    }
 
     try {
-      const [sum, cats, depts, techs, perf] = await Promise.all([
+      const [sum, cats, depts, techs, perf, logsRes] = await Promise.all([
         adminApi.getReportSummary(),
         adminApi.getReportByCategory(),
         adminApi.getReportByDepartment(),
         adminApi.getReportByTechnician(),
         adminApi.getPerformanceMetrics(),
+        adminApi.getAuditLogs({ limit: 6 }).catch(() => ({ logs: [] })),
       ]);
 
       setSummary(sum);
@@ -69,17 +83,36 @@ export default function ReportsDashboardPage() {
       setDepartments(Array.isArray(depts) ? depts : []);
       setTechnicians(Array.isArray(techs) ? techs : []);
       setPerformance(perf);
+      setRecentActivities(logsRes.logs || []);
+      setLastUpdated(new Date());
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to load report analytics');
+      if (!quiet) {
+        toast.error(err?.message || 'Failed to load report analytics');
+      }
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (!quiet) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     loadAllReports();
   }, [loadAllReports]);
+
+  // Periodic real-time background sync every 15 seconds
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const intervalId = setInterval(() => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        loadAllReports(false, true);
+      }
+    }, 15000);
+
+    return () => clearInterval(intervalId);
+  }, [autoRefresh, loadAllReports]);
 
   if (isLoading) {
     return (
@@ -112,18 +145,45 @@ export default function ReportsDashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Executive Analytics & SLA Performance"
-        description="Interactive visual analytics powered by ApexCharts across Information Systems infrastructure and CBE branches."
+        description="Interactive visual analytics powered by ApexCharts reflecting real-time database activity across CBE branches."
       >
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => loadAllReports(true)}
-          disabled={isRefreshing}
-          className="text-xs"
-        >
-          <RefreshCw className={`size-3.5 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh Charts
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Live Sync Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setAutoRefresh((prev) => !prev)}
+            className={`text-xs flex items-center gap-1.5 transition-colors ${
+              autoRefresh
+                ? 'border-emerald-200 bg-emerald-50/50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-300'
+                : 'text-zinc-500'
+            }`}
+          >
+            <span className="relative flex h-2 w-2">
+              {autoRefresh && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              )}
+              <span
+                className={`relative inline-flex rounded-full h-2 w-2 ${
+                  autoRefresh ? 'bg-emerald-500' : 'bg-zinc-400'
+                }`}
+              />
+            </span>
+            <span>{autoRefresh ? 'Live Sync Active' : 'Live Sync Paused'}</span>
+          </Button>
+
+          {/* Manual Refresh Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadAllReports(true)}
+            disabled={isRefreshing}
+            className="text-xs"
+          >
+            <RefreshCw className={`size-3.5 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh Charts
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Primary KPI Row */}
@@ -378,6 +438,107 @@ export default function ReportsDashboardPage() {
                       </TableRow>
                     );
                   })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Row 4: Real-Time Incident Activity Stream Driving Analytics */}
+      <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Activity className="size-4 text-[#6f1a7e]" />
+              Live Incident Activity Feed
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Recent workflow status transitions and assignment events directly reflecting into these charts.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-3">
+            {lastUpdated && (
+              <span className="text-[11px] text-zinc-400">
+                Synced at {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+            <Link
+              href="/admin/audit-logs"
+              className="inline-flex items-center gap-1 text-xs font-medium text-[#6f1a7e] hover:text-[#561361] hover:underline"
+            >
+              <span>Full Audit Trail</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {recentActivities.length === 0 ? (
+            <div className="py-6 text-center text-xs text-zinc-500">
+              No recent lifecycle transition events recorded yet.
+            </div>
+          ) : (
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+              <Table>
+                <TableHeader className="bg-zinc-50/70 dark:bg-zinc-900/60">
+                  <TableRow className="border-b border-zinc-200 dark:border-zinc-800">
+                    <TableHead className="text-xs font-semibold">Incident / Ticket</TableHead>
+                    <TableHead className="text-xs font-semibold">Lifecycle Transition</TableHead>
+                    <TableHead className="text-xs font-semibold">Actor</TableHead>
+                    <TableHead className="text-xs font-semibold">Reason / Note</TableHead>
+                    <TableHead className="text-xs font-semibold text-right">Activity Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentActivities.map((act) => (
+                    <TableRow
+                      key={act.id}
+                      className="border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40"
+                    >
+                      <TableCell className="text-xs">
+                        <Link
+                          href={`/tickets/${act.ticketId}`}
+                          className="font-medium text-[#6f1a7e] hover:underline flex items-center gap-1.5"
+                        >
+                          <span className="font-mono font-semibold">
+                            {act.ticket?.ticketNumber || 'Ticket'}
+                          </span>
+                          {act.ticket?.title && (
+                            <span className="text-zinc-600 dark:text-zinc-400 truncate max-w-[200px]">
+                              - {act.ticket.title}
+                            </span>
+                          )}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <div className="flex items-center gap-1.5">
+                          {act.previousStatus ? (
+                            <>
+                              <StatusBadge status={act.previousStatus} />
+                              <ArrowRight className="size-3 text-zinc-400" />
+                            </>
+                          ) : null}
+                          <StatusBadge status={act.newStatus} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                            {act.actor
+                              ? `${act.actor.firstName} ${act.actor.lastName}`
+                              : 'System'}
+                          </span>
+                          {act.actor?.role && <RoleBadge role={act.actor.role} />}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-zinc-500 max-w-[220px] truncate">
+                        {act.reason || '—'}
+                      </TableCell>
+                      <TableCell className="text-xs text-right text-zinc-400 font-mono">
+                        {formatRelativeTime(act.changedAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>

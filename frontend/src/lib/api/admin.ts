@@ -126,9 +126,10 @@ export const adminApi = {
 
   // Reports
   getReportSummary: async (): Promise<SystemReportSummary> => {
-    const res = await api.get<ApiResponse<SystemReportSummary>>('/reports/summary');
-    return (
-      res.data || {
+    const res = await api.get<ApiResponse<any>>('/reports/summary');
+    const d = res.data;
+    if (!d) {
+      return {
         totalTickets: 0,
         openTickets: 0,
         assignedTickets: 0,
@@ -138,35 +139,80 @@ export const adminApi = {
         cancelledTickets: 0,
         criticalPending: 0,
         resolutionRatePercent: 0,
-      }
-    );
+      };
+    }
+    return {
+      totalTickets: Number(d.totalTickets ?? d.tickets?.total ?? 0),
+      openTickets: Number(d.openTickets ?? d.tickets?.open ?? 0),
+      assignedTickets: Number(d.assignedTickets ?? d.tickets?.assigned ?? 0),
+      inProgressTickets: Number(d.inProgressTickets ?? d.tickets?.inProgress ?? 0),
+      resolvedTickets: Number(d.resolvedTickets ?? d.tickets?.resolved ?? 0),
+      closedTickets: Number(d.closedTickets ?? d.tickets?.closed ?? 0),
+      cancelledTickets: Number(d.cancelledTickets ?? d.tickets?.cancelled ?? 0),
+      criticalPending: Number(d.criticalPending ?? d.tickets?.criticalActive ?? 0),
+      resolutionRatePercent: Number(
+        d.resolutionRatePercent ?? d.tickets?.resolutionRatePercentage ?? 0
+      ),
+    };
   },
 
   getReportByCategory: async (): Promise<CategoryDistribution[]> => {
-    const res = await api.get<ApiResponse<CategoryDistribution[]>>('/reports/by-category');
-    return res.data || [];
+    const res = await api.get<ApiResponse<any[]>>('/reports/by-category');
+    const list = Array.isArray(res.data) ? res.data : [];
+    return list.map((item: any) => ({
+      categoryId: item.categoryId || item.id || '',
+      categoryName: item.categoryName || item.name || 'Uncategorized',
+      count: Number(item.count ?? item.totalTickets ?? 0),
+      percentage: Number(item.percentage ?? 0),
+    }));
   },
 
   getReportByDepartment: async (): Promise<DepartmentDistribution[]> => {
-    const res = await api.get<ApiResponse<DepartmentDistribution[]>>('/reports/by-department');
-    return res.data || [];
+    const res = await api.get<ApiResponse<any[]>>('/reports/by-department');
+    const list = Array.isArray(res.data) ? res.data : [];
+    return list.map((item: any) => ({
+      departmentId: item.departmentId || item.id || '',
+      departmentName: item.departmentName || item.name || 'Unknown Department',
+      count: Number(item.count ?? item.totalTickets ?? 0),
+      percentage: Number(item.percentage ?? 0),
+    }));
   },
 
   getReportByTechnician: async (): Promise<TechnicianWorkload[]> => {
-    const res = await api.get<ApiResponse<TechnicianWorkload[]>>('/reports/by-technician');
-    return res.data || [];
+    const res = await api.get<ApiResponse<any[]>>('/reports/by-technician');
+    const list = Array.isArray(res.data) ? res.data : [];
+    return list.map((item: any) => ({
+      technicianId: item.technicianId || item.id || '',
+      technicianName:
+        item.technicianName ||
+        item.name ||
+        `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
+        'Technician',
+      assignedCount: Number(
+        item.assignedCount ?? item.totalHistoricalAssignments ?? item.activeTicketsCount ?? 0
+      ),
+      inProgressCount: Number(item.inProgressCount ?? 0),
+      resolvedCount: Number(item.resolvedCount ?? item.totalResolvedCount ?? 0),
+    }));
   },
 
   getPerformanceMetrics: async (): Promise<PerformanceMetrics> => {
-    const res = await api.get<ApiResponse<PerformanceMetrics>>('/reports/performance');
-    return (
-      res.data || {
+    const res = await api.get<ApiResponse<any>>('/reports/performance');
+    const d = res.data;
+    if (!d) {
+      return {
         avgResolutionHours: 0,
-        withinSlaPercent: 0,
+        withinSlaPercent: 100,
         breachedSlaPercent: 0,
         totalResolvedCount: 0,
-      }
-    );
+      };
+    }
+    return {
+      avgResolutionHours: Number(d.avgResolutionHours ?? d.overallAverageResolutionHours ?? 0),
+      withinSlaPercent: Number(d.withinSlaPercent ?? 100),
+      breachedSlaPercent: Number(d.breachedSlaPercent ?? 0),
+      totalResolvedCount: Number(d.totalResolvedCount ?? d.totalResolvedSample ?? 0),
+    };
   },
 
   // Audit Logs
