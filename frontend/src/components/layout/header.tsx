@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { RoleBadge } from '@/components/shared/role-badge';
+import { NotificationBell } from './notification-bell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,6 +95,9 @@ export function Header({ onToggleMobileMenu }: HeaderProps) {
           )}
 
           {role && <RoleBadge role={role} className="hidden sm:inline-flex" />}
+
+          {/* Real-time Notification Bell */}
+          <NotificationBell />
 
           {/* Clickable Profile Section Triggering Dropdown */}
           <DropdownMenu>

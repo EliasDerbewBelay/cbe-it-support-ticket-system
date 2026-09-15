@@ -7,6 +7,7 @@ import userRoutes from './userRoutes';
 import departmentRoutes from './departmentRoutes';
 import reportRoutes from './reportRoutes';
 import lifecycleRoutes from './lifecycleRoutes';
+import notificationRoutes from './notificationRoutes';
 
 const apiRouter = Router();
 
@@ -33,5 +34,8 @@ apiRouter.use('/reports', reportRoutes);
 
 // Mount audit logs and compliance history under /api/audit-logs
 apiRouter.use('/audit-logs', lifecycleRoutes);
+
+// Mount notification routes under /api/notifications
+apiRouter.use('/notifications', notificationRoutes);
 
 export default apiRouter;

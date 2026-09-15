@@ -101,6 +101,7 @@ model tickets {
   ticket_assignments    ticket_assignments[]
   ticket_comments       ticket_comments[]
   ticket_status_history ticket_status_history[]
+  notifications         notifications[]
   category              categories              @relation(fields: [category_id], references: [id], map: "fk_tickets_category")
   closed_by_user        users?                  @relation("closed_tickets", fields: [closed_by], references: [id], onDelete: Restrict, map: "fk_tickets_closed_by")
   department            departments             @relation(fields: [department_id], references: [id], map: "fk_tickets_department")
@@ -137,6 +138,7 @@ model users {
   closed_tickets         tickets[]               @relation("closed_tickets")
   submitted_tickets      tickets[]               @relation("submitted_tickets")
   resolved_tickets       tickets[]               @relation("resolved_tickets")
+  notifications          notifications[]
   department             departments             @relation(fields: [department_id], references: [id], map: "fk_users_department")
 
   @@index([department_id], map: "idx_users_department_id")
@@ -144,6 +146,23 @@ model users {
   @@index([employee_id], map: "idx_users_employee_id")
   @@index([is_active], map: "idx_users_is_active")
   @@index([role], map: "idx_users_role")
+}
+
+model notifications {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String            @db.Uuid
+  ticket_id   String?           @db.Uuid
+  title       String            @db.VarChar(150)
+  message     String
+  type        notification_type @default(INFO)
+  is_read     Boolean           @default(false)
+  created_at  DateTime          @default(now()) @db.Timestamptz(6)
+  read_at     DateTime?         @db.Timestamptz(6)
+  user        users             @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_notifications_user")
+  ticket      tickets?          @relation(fields: [ticket_id], references: [id], onDelete: Cascade, map: "fk_notifications_ticket")
+
+  @@index([user_id, is_read], map: "idx_notifications_user_read")
+  @@index([user_id, created_at(sort: Desc)], map: "idx_notifications_user_created")
 }
 
 enum ticket_priority {
@@ -166,4 +185,15 @@ enum user_role {
   EMPLOYEE
   TECHNICIAN
   ADMINISTRATOR
+}
+
+enum notification_type {
+  INFO
+  TICKET_CREATED
+  TICKET_ASSIGNED
+  STATUS_CHANGED
+  COMMENT_ADDED
+  TICKET_RESOLVED
+  TICKET_CLOSED
+  TICKET_CANCELLED
 }

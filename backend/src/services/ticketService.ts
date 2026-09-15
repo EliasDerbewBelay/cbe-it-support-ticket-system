@@ -9,6 +9,12 @@ import {
   UpdateTicketStatusInput,
 } from '../types/ticket';
 import { SanitizedUser } from '../types/auth';
+import {
+  notifyTicketCreated,
+  notifyTicketAssigned,
+  notifyTicketStatusChanged,
+  notifyCommentAdded,
+} from './notificationService';
 
 export class NotFoundError extends Error {
   statusCode: number;
@@ -55,7 +61,7 @@ export const createTicket = async (
   }
 
   // Create Ticket and initial Status History atomically in a transaction
-  return prisma.$transaction(async (tx) => {
+  const createdTicket = await prisma.$transaction(async (tx) => {
     const newTicket = await tx.tickets.create({
       data: {
         title: input.title.trim(),
@@ -89,6 +95,13 @@ export const createTicket = async (
 
     return newTicket;
   });
+
+  // Asynchronously trigger notification alerts
+  notifyTicketCreated(createdTicket).catch((err) =>
+    console.error('[TicketService] Notification error in createTicket:', err)
+  );
+
+  return createdTicket;
 };
 
 /**
@@ -312,7 +325,7 @@ export const cancelTicket = async (
     throw new ValidationError(`Cannot cancel a ticket that is already ${ticket.status}.`);
   }
 
-  return prisma.$transaction(async (tx) => {
+  const cancelledTicket = await prisma.$transaction(async (tx) => {
     const updatedTicket = await tx.tickets.update({
       where: { id: ticketId },
       data: { status: 'CANCELLED' },
@@ -334,6 +347,17 @@ export const cancelTicket = async (
 
     return updatedTicket;
   });
+
+  notifyTicketStatusChanged(
+    cancelledTicket,
+    'CANCELLED',
+    userId,
+    reason.trim()
+  ).catch((err) =>
+    console.error('[TicketService] Notification error in cancelTicket:', err)
+  );
+
+  return cancelledTicket;
 };
 
 /**
@@ -387,7 +411,7 @@ export const addComment = async (
   // Employees can never create internal notes (BR-11)
   const effectiveIsInternal = authorRole === 'EMPLOYEE' ? false : Boolean(isInternal);
 
-  return prisma.ticket_comments.create({
+  const comment = await prisma.ticket_comments.create({
     data: {
       ticket_id: ticketId,
       author_id: authorId,
@@ -405,6 +429,17 @@ export const addComment = async (
       },
     },
   });
+
+  notifyCommentAdded(
+    ticketId,
+    authorId,
+    content.trim(),
+    effectiveIsInternal
+  ).catch((err) =>
+    console.error('[TicketService] Notification error in addComment:', err)
+  );
+
+  return comment;
 };
 
 /**
@@ -686,7 +721,7 @@ export const assignTechnician = async (
     throw new ValidationError('Cannot assign tickets to a deactivated technician account.');
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // 1. Deactivate existing active assignment if this ticket was previously assigned
     await tx.ticket_assignments.updateMany({
       where: {
@@ -755,6 +790,12 @@ export const assignTechnician = async (
       assignment,
     };
   });
+
+  notifyTicketAssigned(result.ticket, technicianId, adminId).catch((err) =>
+    console.error('[TicketService] Notification error in assignTechnician:', err)
+  );
+
+  return result;
 };
 
 /**
@@ -780,7 +821,7 @@ export const closeTicket = async (
     );
   }
 
-  return prisma.$transaction(async (tx) => {
+  const closed = await prisma.$transaction(async (tx) => {
     const now = new Date();
 
     const updatedTicket = await tx.tickets.update({
@@ -811,6 +852,12 @@ export const closeTicket = async (
 
     return updatedTicket;
   });
+
+  notifyTicketStatusChanged(closed, 'CLOSED', adminId, notes?.trim()).catch((err) =>
+    console.error('[TicketService] Notification error in closeTicket:', err)
+  );
+
+  return closed;
 };
 
 /**
@@ -860,7 +907,7 @@ export const resolveTicket = async (
 
   const now = new Date();
 
-  return prisma.$transaction(async (tx) => {
+  const resolved = await prisma.$transaction(async (tx) => {
     const updated = await tx.tickets.update({
       where: { id: ticketId },
       data: {
@@ -910,6 +957,17 @@ export const resolveTicket = async (
 
     return updated;
   });
+
+  notifyTicketStatusChanged(
+    resolved,
+    'RESOLVED',
+    userId,
+    trimmedNotes
+  ).catch((err) =>
+    console.error('[TicketService] Notification error in resolveTicket:', err)
+  );
+
+  return resolved;
 };
 
 /**
@@ -958,7 +1016,7 @@ export const startWork = async (
 
   const now = new Date();
 
-  return prisma.$transaction(async (tx) => {
+  const inProgress = await prisma.$transaction(async (tx) => {
     const updated = await tx.tickets.update({
       where: { id: ticketId },
       data: {
@@ -1007,6 +1065,17 @@ export const startWork = async (
 
     return updated;
   });
+
+  notifyTicketStatusChanged(
+    inProgress,
+    'IN_PROGRESS',
+    userId,
+    notes?.trim()
+  ).catch((err) =>
+    console.error('[TicketService] Notification error in startWork:', err)
+  );
+
+  return inProgress;
 };
 
 /**

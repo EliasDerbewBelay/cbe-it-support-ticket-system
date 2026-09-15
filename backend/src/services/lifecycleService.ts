@@ -18,6 +18,10 @@ import {
   NotFoundError,
   ValidationError,
 } from './ticketService';
+import {
+  notifyTicketAssigned,
+  notifyTicketStatusChanged,
+} from './notificationService';
 
 /**
  * Helper to format duration milliseconds into a human-readable string
@@ -570,7 +574,7 @@ export const executeStatusTransition = async (
 
   const now = new Date();
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // 1. If technician assignment is involved (OPEN -> ASSIGNED or ASSIGNED -> ASSIGNED)
     if (targetTechnicianId) {
       await tx.ticket_assignments.updateMany({
@@ -666,4 +670,27 @@ export const executeStatusTransition = async (
       transition: transitionLog,
     };
   });
+
+  // Trigger lifecycle notifications asynchronously
+  const assignedTechId = targetTechnicianId;
+  if (assignedTechId) {
+    notifyTicketAssigned(
+      result.ticket,
+      assignedTechId,
+      requestingUser.firstName + ' ' + requestingUser.lastName
+    ).catch((err) =>
+      console.error('[LifecycleService] Notification error on assignment:', err)
+    );
+  }
+
+  notifyTicketStatusChanged(
+    result.ticket,
+    input.targetStatus,
+    requestingUser.id,
+    input.reason?.trim() || input.resolutionNotes?.trim()
+  ).catch((err) =>
+    console.error('[LifecycleService] Notification error on status change:', err)
+  );
+
+  return result;
 };
