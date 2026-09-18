@@ -253,6 +253,17 @@ export default function TicketsPage() {
           onClose={() => setAssignTarget(null)}
           ticketId={assignTarget.id}
           ticketNumber={assignTarget.ticketNumber}
+          currentTechnicianId={
+            assignTarget.ticketAssignments?.find((a) => a.isCurrent)?.technicianId ||
+            assignTarget.ticketAssignments?.find((a) => a.isCurrent)?.technician?.id
+          }
+          currentTechnicianName={(() => {
+            const curTech = assignTarget.ticketAssignments?.find((a) => a.isCurrent)?.technician;
+            if (!curTech) return undefined;
+            const first = curTech.firstName || curTech.first_name || '';
+            const last = curTech.lastName || curTech.last_name || '';
+            return `${first} ${last}`.trim() || undefined;
+          })()}
           onAssigned={() => fetchTickets(true)}
         />
       )}

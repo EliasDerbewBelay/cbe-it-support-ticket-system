@@ -400,10 +400,20 @@ export default function TicketDetailPage() {
 
           {/* Support Technician Card */}
           <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 Assigned IS Engineer
               </CardTitle>
+              {techName && isAdmin && !isClosedOrCancelled && (
+                <Button
+                  variant="outline"
+                  size="xs"
+                  onClick={() => setIsAssignOpen(true)}
+                  className="text-xs h-7 border-purple-200 text-[#6f1a7e] hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300"
+                >
+                  Reassign
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-3 text-xs">
               {techName ? (
@@ -461,6 +471,11 @@ export default function TicketDetailPage() {
             onClose={() => setIsAssignOpen(false)}
             ticketId={ticket.id}
             ticketNumber={ticket.ticketNumber}
+            currentTechnicianId={
+              currentAssignment?.technicianId ||
+              currentAssignment?.technician?.id
+            }
+            currentTechnicianName={techName || undefined}
             onAssigned={loadTicketData}
           />
 

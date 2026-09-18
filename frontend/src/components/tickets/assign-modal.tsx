@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,8 @@ interface AssignModalProps {
   onClose: () => void;
   ticketId: string;
   ticketNumber: string;
+  currentTechnicianId?: string;
+  currentTechnicianName?: string;
   onAssigned: () => void;
 }
 
@@ -38,23 +40,49 @@ export function AssignModal({
   onClose,
   ticketId,
   ticketNumber,
+  currentTechnicianId,
+  currentTechnicianName,
   onAssigned,
 }: AssignModalProps) {
   const [technicians, setTechnicians] = useState<ActiveTechnician[]>([]);
-  const [selectedTechId, setSelectedTechId] = useState<string>('');
+  const [selectedTechId, setSelectedTechId] = useState<string>(currentTechnicianId || '');
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Map technician IDs to human-readable full names for the closed Select trigger
+  const technicianItemsMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (currentTechnicianId && currentTechnicianName) {
+      map[currentTechnicianId] = currentTechnicianName;
+    }
+    for (const t of technicians) {
+      const first = t.firstName || (t as any).first_name || '';
+      const last = t.lastName || (t as any).last_name || '';
+      const fullName = `${first} ${last}`.trim();
+      map[t.id] = fullName || 'Technician';
+    }
+    return map;
+  }, [technicians, currentTechnicianId, currentTechnicianName]);
+
+  const hasCurrentTechInList = useMemo(() => {
+    if (!currentTechnicianId) return true;
+    return technicians.some((t) => t.id === currentTechnicianId);
+  }, [technicians, currentTechnicianId]);
+
   useEffect(() => {
     if (isOpen) {
+      setSelectedTechId(currentTechnicianId || '');
+      setNotes('');
       const loadTechnicians = async () => {
         setIsLoading(true);
         try {
           const data = await adminApi.getActiveTechnicians();
           const safeData = Array.isArray(data) ? data : [];
           setTechnicians(safeData);
-          if (safeData.length > 0 && !selectedTechId) {
+          if (currentTechnicianId) {
+            setSelectedTechId(currentTechnicianId);
+          } else if (safeData.length > 0) {
             setSelectedTechId(safeData[0].id);
           }
         } catch {
@@ -65,7 +93,7 @@ export function AssignModal({
       };
       loadTechnicians();
     }
-  }, [isOpen, selectedTechId]);
+  }, [isOpen, currentTechnicianId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,19 +138,34 @@ export function AssignModal({
               Select IS Support Technician
             </Label>
             {isLoading ? (
-              <div className="flex items-center gap-2 p-2.5 text-xs text-zinc-500 border rounded-md">
-                <Loader2 className="size-3.5 animate-spin" />
+              <div className="flex items-center gap-2 p-2.5 text-xs text-zinc-500 border border-input rounded-lg bg-zinc-50/50 dark:bg-zinc-900/50">
+                <Loader2 className="size-3.5 animate-spin text-[#6f1a7e]" />
                 <span>Loading technicians...</span>
               </div>
             ) : (
-              <Select value={selectedTechId} onValueChange={(val) => setSelectedTechId(val || '')}>
+              <Select
+                value={selectedTechId}
+                onValueChange={(val) => setSelectedTechId(val || '')}
+                items={technicianItemsMap}
+              >
                 <SelectTrigger id="tech-select" className="h-9 text-xs">
-                  <SelectValue placeholder="Choose a technician..." />
+                  <SelectValue placeholder="Choose a technician...">
+                    {(val) => {
+                      if (!val) return 'Choose a technician...';
+                      return technicianItemsMap[val] ?? (currentTechnicianName || 'Choose a technician...');
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
+                  {currentTechnicianId && !hasCurrentTechInList && (
+                    <SelectItem key={currentTechnicianId} value={currentTechnicianId} className="text-xs">
+                      {currentTechnicianName || 'Currently Assigned IS Engineer'} (Currently Assigned)
+                    </SelectItem>
+                  )}
                   {technicians.map((t) => (
                     <SelectItem key={t.id} value={t.id} className="text-xs">
-                      {t.firstName} {t.lastName} ({t.activeAssignmentsCount} active tickets)
+                      {t.firstName} {t.lastName} ({t.activeAssignmentsCount} active{' '}
+                      {t.activeAssignmentsCount === 1 ? 'ticket' : 'tickets'})
                     </SelectItem>
                   ))}
                 </SelectContent>

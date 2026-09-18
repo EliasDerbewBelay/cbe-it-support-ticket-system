@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { adminApi } from '@/lib/api/admin';
 import { DepartmentItem, UserItem } from '@/types/admin';
 import { UserRole } from '@/types/auth';
@@ -62,6 +62,17 @@ export default function UsersAdminPage() {
   const [departmentId, setDepartmentId] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+
+  const departmentItemsMap = useMemo(() => {
+    return Object.fromEntries(departments.map((d) => [d.id, d.name]));
+  }, [departments]);
+
+  const roleLabels: Record<string, string> = {
+    ALL: 'All Roles',
+    EMPLOYEE: 'Employee',
+    TECHNICIAN: 'IS Technician',
+    ADMINISTRATOR: 'IS Administrator',
+  };
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -173,9 +184,15 @@ export default function UsersAdminPage() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="w-[140px]">
-            <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val || 'ALL')}>
+            <Select
+              value={roleFilter}
+              onValueChange={(val) => setRoleFilter(val || 'ALL')}
+              items={roleLabels}
+            >
               <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Role" />
+                <SelectValue placeholder="Role">
+                  {(val) => (val && roleLabels[val]) ? roleLabels[val] : 'Role'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Roles</SelectItem>
@@ -325,9 +342,15 @@ export default function UsersAdminPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs font-medium">Role *</Label>
-                <Select value={role} onValueChange={(v) => { if (v) setRole(v as UserRole); }}>
+                <Select
+                  value={role}
+                  onValueChange={(v) => { if (v) setRole(v as UserRole); }}
+                  items={roleLabels}
+                >
                   <SelectTrigger className="text-xs h-8.5">
-                    <SelectValue />
+                    <SelectValue placeholder="Select Role">
+                      {(v) => (v && roleLabels[v]) ? roleLabels[v] : 'Select Role'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="EMPLOYEE">Employee</SelectItem>
@@ -339,9 +362,18 @@ export default function UsersAdminPage() {
 
               <div className="space-y-1">
                 <Label className="text-xs font-medium">Department *</Label>
-                <Select value={departmentId} onValueChange={(val) => setDepartmentId(val || '')}>
+                <Select
+                  value={departmentId}
+                  onValueChange={(val) => setDepartmentId(val || '')}
+                  items={departmentItemsMap}
+                >
                   <SelectTrigger className="text-xs h-8.5">
-                    <SelectValue placeholder="Department" />
+                    <SelectValue placeholder="Department">
+                      {(val) => {
+                        if (!val) return 'Department';
+                        return departmentItemsMap[val] ?? 'Department';
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {departments.map((d) => (

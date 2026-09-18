@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, UserCheck } from 'lucide-react';
 
 interface TicketTableProps {
   tickets: Ticket[];
@@ -98,9 +98,22 @@ export function TicketTable({ tickets, onAssignClick, isAdmin }: TicketTableProp
 
                 <TableCell>
                   {technician ? (
-                    <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
-                      {technician}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                        {technician}
+                      </span>
+                      {isAdmin && onAssignClick && ticket.status !== 'CLOSED' && ticket.status !== 'CANCELLED' && (
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => onAssignClick(ticket)}
+                          className="size-5 text-zinc-400 hover:text-[#6f1a7e] hover:bg-purple-50 transition-colors"
+                          title="Reassign technician"
+                        >
+                          <UserCheck className="size-3" />
+                        </Button>
+                      )}
+                    </div>
                   ) : isAdmin && onAssignClick && ticket.status !== 'CLOSED' && ticket.status !== 'CANCELLED' ? (
                     <Button
                       variant="outline"
