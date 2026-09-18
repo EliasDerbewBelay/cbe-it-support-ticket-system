@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +35,11 @@ export default function NewTicketPage() {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Map category IDs to human-readable names for presentation
+  const categoryItemsMap = useMemo(() => {
+    return Object.fromEntries(categories.map((c) => [c.id, c.name]));
+  }, [categories]);
+
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -42,7 +47,7 @@ export default function NewTicketPage() {
         const safeData = Array.isArray(data) ? data : [];
         setCategories(safeData);
         if (safeData.length > 0) {
-          setCategoryId(safeData[0].id);
+          setCategoryId((prev) => prev || safeData[0].id);
         }
       } catch {
         toast.error('Failed to load incident categories.');
@@ -179,13 +184,23 @@ export default function NewTicketPage() {
                   Incident Category <span className="text-red-500">*</span>
                 </Label>
                 {isLoadingCategories ? (
-                  <div className="h-9 border rounded-md flex items-center px-3 text-xs text-zinc-400">
-                    Loading categories...
+                  <div className="h-9 border border-input rounded-lg flex items-center gap-2 px-3 text-xs text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/50">
+                    <Loader2 className="size-3.5 animate-spin text-[#6f1a7e]" />
+                    <span>Loading categories...</span>
                   </div>
                 ) : (
-                  <Select value={categoryId} onValueChange={(val) => setCategoryId(val || '')}>
+                  <Select
+                    value={categoryId}
+                    onValueChange={(val) => setCategoryId(val || '')}
+                    items={categoryItemsMap}
+                  >
                     <SelectTrigger id="category-select" className="h-9 text-xs">
-                      <SelectValue placeholder="Select Category" />
+                      <SelectValue placeholder="Select Category">
+                        {(val) => {
+                          if (!val) return 'Select Category';
+                          return categoryItemsMap[val] ?? 'Select Category';
+                        }}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (

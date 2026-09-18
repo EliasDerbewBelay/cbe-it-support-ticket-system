@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -42,7 +43,17 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-500">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-500 gap-4">
+        <div className="relative size-16 shrink-0">
+          <Image
+            src="/cbe_logo.png"
+            alt="Commercial Bank of Ethiopia Logo"
+            width={64}
+            height={64}
+            className="size-full object-contain"
+            priority
+          />
+        </div>
         <div className="flex items-center gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs">
           <Loader2 className="size-5 animate-spin text-[#6f1a7e]" />
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">

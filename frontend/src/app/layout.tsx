@@ -21,6 +21,11 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: 'CBE IT Support Ticket Management System',
   description: 'Enterprise IT incident logging, tracking, and resolution platform for Commercial Bank of Ethiopia',
+  icons: {
+    icon: '/cbe_logo.png',
+    shortcut: '/cbe_logo.png',
+    apple: '/cbe_logo.png',
+  },
 };
 
 export default function RootLayout({

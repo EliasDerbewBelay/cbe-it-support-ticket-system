@@ -70,10 +70,10 @@ export default function CategoriesPage() {
     setIsSubmitting(true);
     try {
       await adminApi.createCategory({
-        name: name.trim().toUpperCase(),
+        name: name.trim(),
         description: description.trim() || undefined,
       });
-      toast.success(`Category "${name.toUpperCase()}" created.`);
+      toast.success(`Category "${name.trim()}" created.`);
       setIsOpen(false);
       setName('');
       setDescription('');
@@ -111,7 +111,7 @@ export default function CategoriesPage() {
           <Table>
             <TableHeader className="bg-zinc-50/70 dark:bg-zinc-900/60">
               <TableRow className="border-b border-zinc-200 dark:border-zinc-800">
-                <TableHead className="text-xs font-semibold w-[200px]">Category Code</TableHead>
+                <TableHead className="text-xs font-semibold w-[220px]">Category Name</TableHead>
                 <TableHead className="text-xs font-semibold">Description & Scope</TableHead>
                 <TableHead className="text-xs font-semibold w-[120px] text-center">Status</TableHead>
                 <TableHead className="text-xs font-semibold w-[110px] text-right">Action</TableHead>
@@ -123,9 +123,9 @@ export default function CategoriesPage() {
                   key={cat.id}
                   className="border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
                 >
-                  <TableCell className="font-mono font-semibold text-xs text-zinc-900 dark:text-zinc-100">
+                  <TableCell className="font-medium text-xs text-zinc-900 dark:text-zinc-100">
                     <div className="flex items-center gap-2">
-                      <FolderTree className="size-3.5 text-zinc-400 shrink-0" />
+                      <FolderTree className="size-3.5 text-[#6f1a7e] shrink-0" />
                       <span>{cat.name}</span>
                     </div>
                   </TableCell>
@@ -188,12 +188,12 @@ export default function CategoriesPage() {
 
           <form onSubmit={handleCreate} className="space-y-3 pt-2">
             <div className="space-y-1">
-              <Label className="text-xs font-medium">Category Key *</Label>
+              <Label className="text-xs font-medium">Category Name *</Label>
               <Input
-                className="text-xs h-8.5 font-mono uppercase"
+                className="text-xs h-8.5"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. ATM_HARDWARE"
+                placeholder="e.g. Core Banking & Terminals"
                 required
               />
             </div>

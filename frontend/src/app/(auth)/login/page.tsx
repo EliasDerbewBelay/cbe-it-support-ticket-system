@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -44,8 +45,15 @@ export default function LoginPage() {
     <div className="w-full max-w-md space-y-6">
       {/* Brand Header */}
       <div className="flex flex-col items-center text-center space-y-2">
-        <div className="flex items-center justify-center size-14 rounded-2xl bg-[#6f1a7e] text-white font-bold text-2xl shadow-md border-2 border-amber-400/30">
-          CBE
+        <div className="relative flex items-center justify-center size-20 shrink-0 mb-1">
+          <Image
+            src="/cbe_logo.png"
+            alt="Commercial Bank of Ethiopia Logo"
+            width={80}
+            height={80}
+            className="size-full object-contain drop-shadow-sm"
+            priority
+          />
         </div>
         <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Commercial Bank of Ethiopia

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
@@ -159,8 +160,15 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           onClick={isMobile ? onClose : undefined}
           className="flex items-center gap-3 transition-opacity hover:opacity-90"
         >
-          <div className="flex items-center justify-center size-9 rounded-xl bg-gradient-to-br from-[#6f1a7e] to-[#561361] text-white font-black text-sm shadow-xs ring-1 ring-purple-900/20">
-            CBE
+          <div className="relative flex items-center justify-center size-9 shrink-0">
+            <Image
+              src="/cbe_logo.png"
+              alt="Commercial Bank of Ethiopia Logo"
+              width={36}
+              height={36}
+              className="size-full object-contain"
+              priority
+            />
           </div>
           <div className="flex flex-col min-w-0">
             <span className="font-semibold text-sm tracking-tight text-zinc-900 dark:text-zinc-100 truncate flex items-center gap-1.5">

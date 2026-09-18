@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,15 @@ export function Header({ onToggleMobileMenu }: HeaderProps) {
           </button>
 
           <div className="flex items-center gap-2">
+            <div className="relative size-6 shrink-0 lg:hidden">
+              <Image
+                src="/cbe_logo.png"
+                alt="Commercial Bank of Ethiopia Logo"
+                width={24}
+                height={24}
+                className="size-full object-contain"
+              />
+            </div>
             <span className="text-xs text-zinc-400 font-medium hidden sm:inline">CBE IS Portal</span>
             <span className="text-zinc-300 dark:text-zinc-700 hidden sm:inline">/</span>
             <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">

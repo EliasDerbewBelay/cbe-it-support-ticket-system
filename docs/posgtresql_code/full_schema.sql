@@ -318,15 +318,16 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Seed Categories
 INSERT INTO categories (id, name, description, is_active) VALUES
-    ('a1111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'HARDWARE', 'Desktop PC, Monitor, Scanner, or Peripheral Malfunction', TRUE),
-    ('a2222222-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'SOFTWARE', 'Operating System, Office Suite, or Banking Client Error', TRUE),
-    ('a3333333-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'NETWORK', 'LAN Connectivity, Wi-Fi, VPN, or Gateway Unreachable', TRUE),
-    ('a4444444-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'PRINTER', 'Receipt Printer, Passbook Printer, or Heavy Duty Unit Failure', TRUE),
-    ('a5555555-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'EMAIL', 'Institutional Mailbox Configuration, Quota, or Sync Issue', TRUE),
-    ('a6666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'SYSTEM_ACCESS', 'Active Directory, Shared Folder, or Portal Permissions', TRUE),
-    ('a7777777-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'ACCOUNT', 'Password Reset, Account Lockout, or Credential Renewal', TRUE),
-    ('a8888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'SECURITY', 'Suspected Phishing, Antivirus Alert, or Unauthorized Device', TRUE),
-    ('a9999999-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'OTHER', 'Uncategorized or General IT Inquiries', TRUE)
+    ('a1111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Hardware & Workstations', 'Desktop PC, laptops, monitors, scanners, and peripheral equipment', TRUE),
+    ('a2222222-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Software & Applications', 'Operating systems, office suites, banking applications, and software errors', TRUE),
+    ('a3333333-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Network & Connectivity', 'Branch LAN, Wi-Fi, VPN, and network gateway connectivity', TRUE),
+    ('a4444444-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Printers & Passbook Units', 'Receipt printers, passbook printers, heavy-duty office printers, and scanners', TRUE),
+    ('a5555555-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Email & Messaging', 'Institutional mailbox configuration, Outlook issues, mailbox quotas, and email sync', TRUE),
+    ('a6666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'System Access & Permissions', 'Active Directory permissions, shared network drives, ERP, and portal access', TRUE),
+    ('a7777777-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'User Accounts & Passwords', 'Password resets, account lockouts, credential renewals, and login assistance', TRUE),
+    ('a8888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Security & Antivirus', 'Suspected phishing emails, malware alerts, antivirus updates, and security compliance', TRUE),
+    ('a9999999-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'General IT Inquiries', 'General IT questions, technical consultations, and miscellaneous support requests', TRUE),
+    ('7c6163cc-1ba3-4c39-953f-2f0bc033c675', 'Core Banking & Terminals', 'Core banking platform, teller counter workstations, and transaction peripherals', TRUE)
 ON CONFLICT (name) DO NOTHING;
 
 -- Seed Development Users (Password: Password@123)
