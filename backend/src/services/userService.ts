@@ -7,6 +7,47 @@ import {
   UserQueryFilters,
 } from '../schemas/userSchemas';
 import { NotFoundError, ValidationError } from './ticketService';
+import { createNotification } from './notificationService';
+
+/**
+ * Format user record for API response (guarantees both camelCase and snake_case properties)
+ */
+export const formatUser = (user: any) => ({
+  id: user.id,
+  firstName: user.first_name,
+  lastName: user.last_name,
+  first_name: user.first_name,
+  last_name: user.last_name,
+  email: user.email,
+  role: user.role,
+  departmentId: user.department_id,
+  department_id: user.department_id,
+  employeeId: user.employee_id,
+  employee_id: user.employee_id,
+  phoneNumber: user.phone_number,
+  phone_number: user.phone_number,
+  isActive: user.is_active,
+  is_active: user.is_active,
+  department: user.department
+    ? {
+        id: user.department.id,
+        name: user.department.name,
+        description: user.department.description,
+      }
+    : null,
+  _count: user._count
+    ? {
+        submittedTickets: user._count.submitted_tickets,
+        technicianAssignments: user._count.technician_assignments,
+        submitted_tickets: user._count.submitted_tickets,
+        technician_assignments: user._count.technician_assignments,
+      }
+    : undefined,
+  createdAt: user.created_at,
+  updatedAt: user.updated_at,
+  created_at: user.created_at,
+  updated_at: user.updated_at,
+});
 
 /**
  * List users with administrative filters and pagination
@@ -66,7 +107,7 @@ export const listUsers = async (filters: UserQueryFilters) => {
   ]);
 
   return {
-    users,
+    users: users.map(formatUser),
     meta: {
       total,
       page,
@@ -144,7 +185,7 @@ export const createUser = async (input: CreateUserInput) => {
     },
   });
 
-  return newUser;
+  return formatUser(newUser);
 };
 
 /**
@@ -181,11 +222,11 @@ export const getUserById = async (userId: string) => {
     throw new NotFoundError('User not found');
   }
 
-  return user;
+  return formatUser(user);
 };
 
 /**
- * Update user details or active status
+ * Update user details, email, password, or active status
  */
 export const updateUser = async (
   userId: string,
@@ -210,6 +251,43 @@ export const updateUser = async (
     }
   }
 
+  // If email is updated, verify format and check uniqueness against other users
+  let normalizedEmail: string | undefined = undefined;
+  if (input.email) {
+    normalizedEmail = input.email.trim().toLowerCase();
+    if (normalizedEmail !== user.email) {
+      const existingEmail = await prisma.users.findUnique({
+        where: { email: normalizedEmail },
+      });
+      if (existingEmail && existingEmail.id !== userId) {
+        throw new ValidationError('A user with this email address already exists.');
+      }
+    }
+  }
+
+  // If staff/employee ID is updated, check uniqueness
+  let trimmedEmployeeId: string | null | undefined = undefined;
+  if (input.employeeId !== undefined) {
+    trimmedEmployeeId = input.employeeId && input.employeeId.trim() !== '' ? input.employeeId.trim() : null;
+    if (trimmedEmployeeId && trimmedEmployeeId !== user.employee_id) {
+      const existingEmployee = await prisma.users.findUnique({
+        where: { employee_id: trimmedEmployeeId },
+      });
+      if (existingEmployee && existingEmployee.id !== userId) {
+        throw new ValidationError('A user with this Employee / Staff ID already exists.');
+      }
+    }
+  }
+
+  // If password is provided, validate length and hash
+  let passwordHash: string | undefined = undefined;
+  if (input.password && input.password.trim().length > 0) {
+    if (input.password.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters long.');
+    }
+    passwordHash = await hashPassword(input.password);
+  }
+
   // If department is updated, verify it exists and is active
   if (input.departmentId) {
     const department = await prisma.departments.findUnique({
@@ -221,13 +299,20 @@ export const updateUser = async (
     }
   }
 
+  const trimmedPhone = input.phoneNumber !== undefined
+    ? (input.phoneNumber && input.phoneNumber.trim() !== '' ? input.phoneNumber.trim() : null)
+    : undefined;
+
   const updatedUser = await prisma.users.update({
     where: { id: userId },
     data: {
       first_name: input.firstName ? input.firstName.trim() : undefined,
       last_name: input.lastName ? input.lastName.trim() : undefined,
-      phone_number: input.phoneNumber !== undefined ? (input.phoneNumber ? input.phoneNumber.trim() : null) : undefined,
+      email: normalizedEmail,
+      password_hash: passwordHash,
+      phone_number: trimmedPhone,
       department_id: input.departmentId || undefined,
+      employee_id: trimmedEmployeeId,
       role: input.role || undefined,
       is_active: input.isActive !== undefined ? input.isActive : undefined,
     },
@@ -249,7 +334,65 @@ export const updateUser = async (
     },
   });
 
-  return updatedUser;
+  // Post notifications if credentials or security details were updated
+  if (passwordHash) {
+    await createNotification({
+      userId,
+      title: 'Security Alert: Password Updated',
+      message: 'Your account password has been updated by an administrator. Please log in with your new credentials.',
+      type: 'INFO',
+    });
+  }
+
+  if (normalizedEmail && normalizedEmail !== user.email) {
+    await createNotification({
+      userId,
+      title: 'Account Update: Email Changed',
+      message: `Your account login email was updated from ${user.email} to ${normalizedEmail} by an administrator.`,
+      type: 'INFO',
+    });
+  }
+
+  return formatUser(updatedUser);
+};
+
+/**
+ * Reset password of a user account directly by an administrator
+ */
+export const resetUserPassword = async (
+  userId: string,
+  _adminId: string,
+  newPassword: string
+) => {
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  if (newPassword.length < 8) {
+    throw new ValidationError('Password must be at least 8 characters long.');
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+
+  await prisma.users.update({
+    where: { id: userId },
+    data: {
+      password_hash: passwordHash,
+    },
+  });
+
+  await createNotification({
+    userId,
+    title: 'Security Notice: Password Reset',
+    message: 'Your account password has been reset by an administrator.',
+    type: 'INFO',
+  });
+
+  return { success: true };
 };
 
 /**

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import {
   createUserSchema,
   updateUserSchema,
+  resetPasswordSchema,
   userQuerySchema,
 } from '../schemas/userSchemas';
 import * as userService from '../services/userService';
@@ -175,6 +176,54 @@ export const getActiveTechnicians = async (
       data: technicians,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Reset user password directly
+ * POST /api/users/:id/reset-password
+ */
+export const resetUserPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.params.id as string;
+    const parseResult = resetPasswordSchema.safeParse(req.body);
+
+    if (!parseResult.success) {
+      const errorMessages = parseResult.error.issues.map((i) => i.message).join(', ');
+      res.status(400).json({
+        success: false,
+        message: `Validation failed: ${errorMessages}`,
+      });
+      return;
+    }
+
+    await userService.resetUserPassword(
+      userId,
+      req.user!.id,
+      parseResult.data.password
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully',
+    });
+  } catch (error) {
+    if (
+      error instanceof ValidationError ||
+      error instanceof NotFoundError ||
+      error instanceof ForbiddenError
+    ) {
+      res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+      return;
+    }
     next(error);
   }
 };

@@ -5,6 +5,7 @@ import {
   getUserById,
   updateUser,
   getActiveTechnicians,
+  resetUserPassword,
 } from '../controllers/userController';
 import { authenticate, authorize } from '../middleware/authMiddleware';
 
@@ -27,7 +28,10 @@ router.get('/technicians/active', getActiveTechnicians);
 // 4. Get detailed profile of a single user
 router.get('/:id', getUserById);
 
-// 5. Update user metadata, department, or active status
+// 5. Update user metadata, email, department, role, or active status
 router.patch('/:id', updateUser);
+
+// 6. Reset user password directly
+router.post('/:id/reset-password', resetUserPassword);
 
 export default router;

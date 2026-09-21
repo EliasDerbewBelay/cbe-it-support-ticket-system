@@ -39,12 +39,59 @@ export const createUserSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-  firstName: z.string().trim().min(2).max(50).optional(),
-  lastName: z.string().trim().min(2).max(50).optional(),
-  phoneNumber: z.string().trim().max(30).optional().nullable(),
-  departmentId: z.string().regex(postgresUuidRegex, 'Invalid department UUID').optional(),
-  role: z.enum(['EMPLOYEE', 'TECHNICIAN', 'ADMINISTRATOR']).optional(),
-  isActive: z.boolean().optional(),
+  firstName: z
+    .string()
+    .trim()
+    .min(2, 'First name must be at least 2 characters')
+    .max(50, 'First name cannot exceed 50 characters')
+    .optional(),
+  lastName: z
+    .string()
+    .trim()
+    .min(2, 'Last name must be at least 2 characters')
+    .max(50, 'Last name cannot exceed 50 characters')
+    .optional(),
+  email: z
+    .string()
+    .trim()
+    .email('Please enter a valid institutional email address')
+    .optional(),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .optional()
+    .or(z.literal('')),
+  phoneNumber: z
+    .string()
+    .trim()
+    .max(30, 'Phone number cannot exceed 30 characters')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
+  departmentId: z
+    .string()
+    .regex(postgresUuidRegex, 'Invalid department UUID')
+    .optional(),
+  employeeId: z
+    .string()
+    .trim()
+    .min(2, 'Staff ID must be at least 2 characters')
+    .max(50, 'Staff ID cannot exceed 50 characters')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
+  role: z
+    .enum(['EMPLOYEE', 'TECHNICIAN', 'ADMINISTRATOR'])
+    .optional(),
+  isActive: z
+    .boolean()
+    .optional(),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters'),
 });
 
 export const userQuerySchema = z.object({

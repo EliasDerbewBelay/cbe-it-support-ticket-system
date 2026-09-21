@@ -13,6 +13,32 @@ import {
   UserItem,
 } from '@/types/admin';
 
+export const formatUserItem = (u: any): UserItem => ({
+  id: u.id,
+  firstName: u.firstName || u.first_name || '',
+  lastName: u.lastName || u.last_name || '',
+  email: u.email || '',
+  role: u.role,
+  departmentId: u.departmentId || u.department_id || '',
+  employeeId: u.employeeId !== undefined ? u.employeeId : (u.employee_id ?? null),
+  phoneNumber: u.phoneNumber !== undefined ? u.phoneNumber : (u.phone_number ?? null),
+  isActive: u.isActive !== undefined ? u.isActive : (u.is_active !== undefined ? u.is_active : true),
+  createdAt: u.createdAt || u.created_at || '',
+  updatedAt: u.updatedAt || u.updated_at || '',
+  department: u.department
+    ? {
+        id: u.department.id,
+        name: u.department.name,
+      }
+    : null,
+  _count: u._count
+    ? {
+        submittedTickets: u._count.submittedTickets ?? u._count.submitted_tickets,
+        technicianAssignments: u._count.technicianAssignments ?? u._count.technician_assignments,
+      }
+    : undefined,
+});
+
 export const adminApi = {
   // Users
   getUsers: async (params: {
@@ -30,8 +56,9 @@ export const adminApi = {
       }
     });
     const qs = query.toString() ? `?${query.toString()}` : '';
-    const res = await api.get<ApiResponse<UserItem[]>>(`/users${qs}`);
-    return { users: res.data || [], meta: res.meta };
+    const res = await api.get<ApiResponse<any[]>>(`/users${qs}`);
+    const rawList = Array.isArray(res.data) ? res.data : [];
+    return { users: rawList.map(formatUserItem), meta: res.meta };
   },
 
   createUser: async (payload: {
@@ -44,9 +71,9 @@ export const adminApi = {
     employeeId?: string;
     phoneNumber?: string;
   }): Promise<UserItem> => {
-    const res = await api.post<ApiResponse<UserItem>>('/users', payload);
+    const res = await api.post<ApiResponse<any>>('/users', payload);
     if (!res.data) throw new Error(res.message || 'Failed to create user');
-    return res.data;
+    return formatUserItem(res.data);
   },
 
   updateUser: async (
@@ -55,16 +82,25 @@ export const adminApi = {
       firstName?: string;
       lastName?: string;
       email?: string;
+      password?: string;
       role?: string;
       departmentId?: string;
-      employeeId?: string;
-      phoneNumber?: string;
+      employeeId?: string | null;
+      phoneNumber?: string | null;
       isActive?: boolean;
     }
   ): Promise<UserItem> => {
-    const res = await api.patch<ApiResponse<UserItem>>(`/users/${id}`, payload);
+    const res = await api.patch<ApiResponse<any>>(`/users/${id}`, payload);
     if (!res.data) throw new Error(res.message || 'Failed to update user');
-    return res.data;
+    return formatUserItem(res.data);
+  },
+
+  resetUserPassword: async (
+    id: string,
+    password: string
+  ): Promise<{ success: boolean; message?: string }> => {
+    const res = await api.post<ApiResponse<any>>(`/users/${id}/reset-password`, { password });
+    return { success: res.success, message: res.message };
   },
 
   getActiveTechnicians: async (): Promise<ActiveTechnician[]> => {

@@ -40,9 +40,14 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  Pencil,
+  KeyRound,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { EditUserModal } from '@/components/admin/edit-user-modal';
 
 export default function UsersAdminPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [departments, setDepartments] = useState<DepartmentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +55,17 @@ export default function UsersAdminPage() {
   // Filters
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
+
+  // Edit User Modal
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editTab, setEditTab] = useState<'profile' | 'security'>('profile');
+
+  const handleOpenEdit = (user: UserItem, tab: 'profile' | 'security' = 'profile') => {
+    setEditingUser(user);
+    setEditTab(tab);
+    setIsEditOpen(true);
+  };
 
   // Create User Modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -104,13 +120,15 @@ export default function UsersAdminPage() {
 
   const handleToggleActive = async (user: UserItem) => {
     try {
+      const isCurrentlyActive = user.isActive !== undefined ? user.isActive : (user as any).is_active !== false;
       const updated = await adminApi.updateUser(user.id, {
-        isActive: !user.isActive,
+        isActive: !isCurrentlyActive,
       });
+      const uFirst = updated.firstName || (updated as any).first_name || '';
+      const uLast = updated.lastName || (updated as any).last_name || '';
+      const updatedActive = updated.isActive !== undefined ? updated.isActive : (updated as any).is_active !== false;
       toast.success(
-        `User account ${updated.firstName} ${updated.lastName} ${
-          updated.isActive ? 'activated' : 'deactivated'
-        }.`
+        `User account ${uFirst} ${uLast}`.trim() + ` ${updatedActive ? 'activated' : 'deactivated'}.`
       );
       loadData();
     } catch (err: any) {
@@ -221,66 +239,105 @@ export default function UsersAdminPage() {
                 <TableHead className="text-xs font-semibold">Department</TableHead>
                 <TableHead className="w-[120px] text-xs font-semibold">Staff ID</TableHead>
                 <TableHead className="w-[100px] text-xs font-semibold text-center">Status</TableHead>
-                <TableHead className="w-[110px] text-xs font-semibold text-right">Actions</TableHead>
+                <TableHead className="w-[200px] text-xs font-semibold text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((u) => (
-                <TableRow
-                  key={u.id}
-                  className="border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
-                >
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">
-                        {u.firstName} {u.lastName}
-                      </span>
-                      <span className="text-[11px] text-zinc-400">{u.email}</span>
-                    </div>
-                  </TableCell>
+              {users.map((u) => {
+                const uFirst = u.firstName || (u as any).first_name || '';
+                const uLast = u.lastName || (u as any).last_name || '';
+                const uDisplayName = `${uFirst} ${uLast}`.trim() || u.email;
+                const uActive = u.isActive !== undefined ? u.isActive : (u as any).is_active !== false;
+                const uDept = u.department?.name || 'Unassigned';
+                const uEmpId = u.employeeId || (u as any).employee_id || '—';
 
-                  <TableCell>
-                    <RoleBadge role={u.role} />
-                  </TableCell>
+                return (
+                  <TableRow
+                    key={u.id}
+                    className="border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                  >
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">
+                          {uDisplayName}
+                        </span>
+                        <span className="text-[11px] text-zinc-400">{u.email}</span>
+                      </div>
+                    </TableCell>
 
-                  <TableCell className="text-xs text-zinc-600 dark:text-zinc-300">
-                    {u.department?.name || 'Unassigned'}
-                  </TableCell>
+                    <TableCell>
+                      <RoleBadge role={u.role} />
+                    </TableCell>
 
-                  <TableCell className="text-xs font-mono text-zinc-500">
-                    {u.employeeId || '—'}
-                  </TableCell>
+                    <TableCell className="text-xs text-zinc-600 dark:text-zinc-300">
+                      {uDept}
+                    </TableCell>
 
-                  <TableCell className="text-center">
-                    {u.isActive ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-                        <CheckCircle2 className="size-3" />
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
-                        <XCircle className="size-3" />
-                        Inactive
-                      </span>
-                    )}
-                  </TableCell>
+                    <TableCell className="text-xs font-mono text-zinc-500">
+                      {uEmpId}
+                    </TableCell>
 
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      onClick={() => handleToggleActive(u)}
-                      className={
-                        u.isActive
-                          ? 'text-rose-600 hover:text-rose-700 hover:bg-rose-50 text-[11px]'
-                          : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[11px]'
-                      }
-                    >
-                      {u.isActive ? 'Deactivate' : 'Activate'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    <TableCell className="text-center">
+                      {uActive ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 className="size-3" />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                          <XCircle className="size-3" />
+                          Inactive
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          onClick={() => handleOpenEdit(u, 'profile')}
+                          className="h-7 px-2 text-[11px] font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                          title="Edit profile & email"
+                        >
+                          <Pencil className="size-3 mr-1 text-zinc-500" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          onClick={() => handleOpenEdit(u, 'security')}
+                          className="h-7 px-2 text-[11px] font-medium text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                          title="Manage user password"
+                        >
+                          <KeyRound className="size-3 mr-1 text-[#6f1a7e] dark:text-[#c477d2]" />
+                          Password
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => handleToggleActive(u)}
+                          disabled={currentUser?.id === u.id}
+                          title={
+                            currentUser?.id === u.id
+                              ? 'Administrators cannot deactivate their own account'
+                              : undefined
+                          }
+                          className={
+                            currentUser?.id === u.id
+                              ? 'h-7 px-2 text-zinc-400 cursor-not-allowed text-[11px]'
+                              : uActive
+                              ? 'h-7 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-[11px]'
+                              : 'h-7 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-[11px]'
+                          }
+                        >
+                          {uActive ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -437,6 +494,20 @@ export default function UsersAdminPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setEditingUser(null);
+        }}
+        user={editingUser}
+        departments={departments}
+        currentUserId={currentUser?.id}
+        initialTab={editTab}
+        onUserUpdated={loadData}
+      />
     </div>
   );
 }
