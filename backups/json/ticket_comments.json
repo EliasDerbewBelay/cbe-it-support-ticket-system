@@ -1,0 +1,38 @@
+[
+  {
+    "id": "c2298c4c-7534-4235-8590-02815f53ea51",
+    "ticket_id": "39366b23-a976-4aa2-891b-e1d0bcec7b51",
+    "author_id": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "content": "Issue Resolved: Replaced the damaged cable",
+    "is_internal": false,
+    "created_at": "2026-09-15T05:01:50.321Z",
+    "updated_at": "2026-09-15T05:01:50.321Z"
+  },
+  {
+    "id": "54041475-3c5c-4e0d-9eb0-6900db72239d",
+    "ticket_id": "1a6b0dba-dddd-41cc-a18b-65b67e72481d",
+    "author_id": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "content": "Issue Resolved: I have fixed the issue, now you can use the network safely",
+    "is_internal": false,
+    "created_at": "2026-09-15T06:40:12.843Z",
+    "updated_at": "2026-09-15T06:40:12.843Z"
+  },
+  {
+    "id": "64c32954-25b7-4e64-b98b-7ef9362d3a42",
+    "ticket_id": "a48c4333-5905-470c-bc54-fc2abbe368cf",
+    "author_id": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "content": "Issue Resolved: Resolved the error by connecting with correct cables",
+    "is_internal": false,
+    "created_at": "2026-09-18T08:27:34.295Z",
+    "updated_at": "2026-09-18T08:27:34.295Z"
+  },
+  {
+    "id": "f1f3a6ac-157a-4d29-857f-9f7e005894f0",
+    "ticket_id": "5763137f-fdb7-4bb5-9836-08ae25125e19",
+    "author_id": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "content": "Issue Resolved: Replaced the damaged wires",
+    "is_internal": false,
+    "created_at": "2026-09-21T12:29:00.441Z",
+    "updated_at": "2026-09-21T12:29:00.441Z"
+  }
+]

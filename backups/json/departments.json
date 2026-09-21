@@ -1,0 +1,74 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "name": "Information Systems",
+    "description": "IT Infrastructure, Systems Support & Helpdesk",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-14T10:30:22.124Z"
+  },
+  {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "name": "Finance & Accounts",
+    "description": "Financial Planning, Budgeting and Payroll Operations",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-14T10:30:22.124Z"
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333333",
+    "name": "Human Resources",
+    "description": "Talent Acquisition, Employee Relations and Personnel",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-14T10:30:22.124Z"
+  },
+  {
+    "id": "44444444-4444-4444-4444-444444444444",
+    "name": "Retail Banking",
+    "description": "Branch Banking, Customer Accounts and Counter Services",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-14T10:30:22.124Z"
+  },
+  {
+    "id": "55555555-5555-5555-5555-555555555555",
+    "name": "Operations & Clearing",
+    "description": "Cheque Clearing, Swift Services and Reconciliation",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-14T10:30:22.124Z"
+  },
+  {
+    "id": "66666666-6666-6666-6666-666666666666",
+    "name": "Customer Service",
+    "description": "Call Centre, Help Desk and Inquiries Management",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-14T10:30:22.124Z"
+  },
+  {
+    "id": "d33f3086-41dd-4e1d-bba4-9c57050de207",
+    "name": "Core Banking Systems-1059",
+    "description": "Updated description for Core Banking division",
+    "is_active": true,
+    "created_at": "2026-09-14T12:15:16.603Z",
+    "updated_at": "2026-09-14T12:15:16.666Z"
+  },
+  {
+    "id": "7b969594-9915-40c2-9488-0566a365a737",
+    "name": "Core Banking Systems-7264",
+    "description": "Updated description for Core Banking division",
+    "is_active": true,
+    "created_at": "2026-09-14T12:52:26.216Z",
+    "updated_at": "2026-09-14T12:52:26.280Z"
+  },
+  {
+    "id": "a058514b-d97e-4f65-81e1-c5377ba49f0a",
+    "name": "Core Banking Systems-6379",
+    "description": "Updated description for Core Banking division",
+    "is_active": true,
+    "created_at": "2026-09-14T12:58:46.640Z",
+    "updated_at": "2026-09-14T12:58:46.707Z"
+  }
+]

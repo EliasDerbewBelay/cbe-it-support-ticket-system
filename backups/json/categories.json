@@ -1,0 +1,82 @@
+[
+  {
+    "id": "a1111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "Hardware & Workstations",
+    "description": "Desktop PC, laptops, monitors, scanners, and peripheral equipment",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.931Z"
+  },
+  {
+    "id": "a2222222-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "Software & Applications",
+    "description": "Operating systems, office suites, banking applications, and software errors",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.942Z"
+  },
+  {
+    "id": "a3333333-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "Network & Connectivity",
+    "description": "Branch LAN, Wi-Fi, VPN, and network gateway connectivity",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.946Z"
+  },
+  {
+    "id": "a4444444-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "Printers & Passbook Units",
+    "description": "Receipt printers, passbook printers, heavy-duty office printers, and scanners",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.949Z"
+  },
+  {
+    "id": "a5555555-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "Email & Messaging",
+    "description": "Institutional mailbox configuration, Outlook issues, mailbox quotas, and email sync",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.951Z"
+  },
+  {
+    "id": "a6666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "System Access & Permissions",
+    "description": "Active Directory permissions, shared network drives, ERP, and portal access",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.955Z"
+  },
+  {
+    "id": "a7777777-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "User Accounts & Passwords",
+    "description": "Password resets, account lockouts, credential renewals, and login assistance",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.958Z"
+  },
+  {
+    "id": "a8888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "Security & Antivirus",
+    "description": "Suspected phishing emails, malware alerts, antivirus updates, and security compliance",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.962Z"
+  },
+  {
+    "id": "a9999999-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "General IT Inquiries",
+    "description": "General IT questions, technical consultations, and miscellaneous support requests",
+    "is_active": true,
+    "created_at": "2026-09-14T10:30:22.124Z",
+    "updated_at": "2026-09-18T07:31:26.966Z"
+  },
+  {
+    "id": "7c6163cc-1ba3-4c39-953f-2f0bc033c675",
+    "name": "Core Banking & Terminals",
+    "description": "Core banking platform, teller counter workstations, and transaction peripherals",
+    "is_active": true,
+    "created_at": "2026-09-14T12:15:16.725Z",
+    "updated_at": "2026-09-18T07:31:26.969Z"
+  }
+]

@@ -1,0 +1,155 @@
+[
+  {
+    "id": "7738c820-9c63-46a4-afd5-0926726c9a1a",
+    "ticket_id": "39366b23-a976-4aa2-891b-e1d0bcec7b51",
+    "changed_by": "b3333333-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": null,
+    "new_status": "OPEN",
+    "changed_at": "2026-09-14T20:52:27.534Z",
+    "reason": "Ticket submitted by employee"
+  },
+  {
+    "id": "87a09b40-f4a2-4cbe-8d1c-b35ffe055527",
+    "ticket_id": "39366b23-a976-4aa2-891b-e1d0bcec7b51",
+    "changed_by": "b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "OPEN",
+    "new_status": "ASSIGNED",
+    "changed_at": "2026-09-14T20:53:21.893Z",
+    "reason": "Assigned to technician Tadesse Tech"
+  },
+  {
+    "id": "822c7d2d-afd5-438f-bb70-f513fec4af42",
+    "ticket_id": "39366b23-a976-4aa2-891b-e1d0bcec7b51",
+    "changed_by": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "ASSIGNED",
+    "new_status": "IN_PROGRESS",
+    "changed_at": "2026-09-14T20:53:51.029Z",
+    "reason": "Technician commenced diagnostic and troubleshooting work."
+  },
+  {
+    "id": "5d5d2adf-59ce-45ca-a34a-43e479493348",
+    "ticket_id": "39366b23-a976-4aa2-891b-e1d0bcec7b51",
+    "changed_by": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "IN_PROGRESS",
+    "new_status": "RESOLVED",
+    "changed_at": "2026-09-15T05:01:50.313Z",
+    "reason": "Replaced the damaged cable"
+  },
+  {
+    "id": "2f0ae9a1-9e3b-46ec-8a68-5c162bf1b28c",
+    "ticket_id": "1a6b0dba-dddd-41cc-a18b-65b67e72481d",
+    "changed_by": "b3333333-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": null,
+    "new_status": "OPEN",
+    "changed_at": "2026-09-15T06:38:18.457Z",
+    "reason": "Ticket submitted by employee"
+  },
+  {
+    "id": "26528f5c-2038-44a5-88b7-0062c149c437",
+    "ticket_id": "1a6b0dba-dddd-41cc-a18b-65b67e72481d",
+    "changed_by": "b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "OPEN",
+    "new_status": "ASSIGNED",
+    "changed_at": "2026-09-15T06:39:18.520Z",
+    "reason": "Assigned to technician Tadesse Tech"
+  },
+  {
+    "id": "3bb77a71-6651-4ed2-b143-d6183ad71232",
+    "ticket_id": "1a6b0dba-dddd-41cc-a18b-65b67e72481d",
+    "changed_by": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "ASSIGNED",
+    "new_status": "IN_PROGRESS",
+    "changed_at": "2026-09-15T06:39:48.403Z",
+    "reason": "Technician commenced diagnostic and troubleshooting work."
+  },
+  {
+    "id": "b801186b-5c4b-4add-ba33-7c015449d277",
+    "ticket_id": "1a6b0dba-dddd-41cc-a18b-65b67e72481d",
+    "changed_by": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "IN_PROGRESS",
+    "new_status": "RESOLVED",
+    "changed_at": "2026-09-15T06:40:12.838Z",
+    "reason": "I have fixed the issue, now you can use the network safely"
+  },
+  {
+    "id": "e72c6ca6-08f3-46e5-a2e0-9e83f02a8c48",
+    "ticket_id": "a48c4333-5905-470c-bc54-fc2abbe368cf",
+    "changed_by": "b3333333-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": null,
+    "new_status": "OPEN",
+    "changed_at": "2026-09-18T08:25:03.266Z",
+    "reason": "Ticket submitted by employee"
+  },
+  {
+    "id": "4938093a-864d-4292-8a78-d37ba31fa27a",
+    "ticket_id": "a48c4333-5905-470c-bc54-fc2abbe368cf",
+    "changed_by": "b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "OPEN",
+    "new_status": "ASSIGNED",
+    "changed_at": "2026-09-18T08:26:26.451Z",
+    "reason": "Assigned to technician Tadesse Tech"
+  },
+  {
+    "id": "f71741a1-9fe8-4cb0-be62-bac2ba55808d",
+    "ticket_id": "a48c4333-5905-470c-bc54-fc2abbe368cf",
+    "changed_by": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "ASSIGNED",
+    "new_status": "IN_PROGRESS",
+    "changed_at": "2026-09-18T08:26:49.809Z",
+    "reason": "Technician commenced diagnostic and troubleshooting work."
+  },
+  {
+    "id": "058ed877-1196-4cf6-aeff-54654f17fafb",
+    "ticket_id": "a48c4333-5905-470c-bc54-fc2abbe368cf",
+    "changed_by": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "IN_PROGRESS",
+    "new_status": "RESOLVED",
+    "changed_at": "2026-09-18T08:27:34.289Z",
+    "reason": "Resolved the error by connecting with correct cables"
+  },
+  {
+    "id": "20d8ae02-bc96-4a18-b9d7-4a3a94d59ff4",
+    "ticket_id": "d0605b97-7ba3-459d-8dd3-4ca437421d6d",
+    "changed_by": "b3333333-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": null,
+    "new_status": "OPEN",
+    "changed_at": "2026-09-18T08:39:03.261Z",
+    "reason": "Ticket submitted by employee"
+  },
+  {
+    "id": "1235feb5-3767-4c6e-9470-1439e69a7ddd",
+    "ticket_id": "5763137f-fdb7-4bb5-9836-08ae25125e19",
+    "changed_by": "b3333333-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": null,
+    "new_status": "OPEN",
+    "changed_at": "2026-09-21T12:25:42.114Z",
+    "reason": "Ticket submitted by employee"
+  },
+  {
+    "id": "2e6f4fc3-c89d-4ced-ae5f-19f9e7001659",
+    "ticket_id": "5763137f-fdb7-4bb5-9836-08ae25125e19",
+    "changed_by": "b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "OPEN",
+    "new_status": "ASSIGNED",
+    "changed_at": "2026-09-21T12:26:45.969Z",
+    "reason": "Assigned to technician Tadesse Tech"
+  },
+  {
+    "id": "eb6b4986-48e8-4b11-ab75-379c77b7235a",
+    "ticket_id": "5763137f-fdb7-4bb5-9836-08ae25125e19",
+    "changed_by": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "ASSIGNED",
+    "new_status": "IN_PROGRESS",
+    "changed_at": "2026-09-21T12:27:56.104Z",
+    "reason": "Technician commenced diagnostic and troubleshooting work."
+  },
+  {
+    "id": "bc4cdf00-3c15-4ce7-a184-25c0f9d6f46e",
+    "ticket_id": "5763137f-fdb7-4bb5-9836-08ae25125e19",
+    "changed_by": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "previous_status": "IN_PROGRESS",
+    "new_status": "RESOLVED",
+    "changed_at": "2026-09-21T12:29:00.436Z",
+    "reason": "Replaced the damaged wires"
+  }
+]

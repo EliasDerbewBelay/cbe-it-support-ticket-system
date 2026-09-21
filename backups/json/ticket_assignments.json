@@ -1,0 +1,42 @@
+[
+  {
+    "id": "e4ab352e-b286-453c-8501-c1cae4d97ea1",
+    "ticket_id": "39366b23-a976-4aa2-891b-e1d0bcec7b51",
+    "technician_id": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "assigned_by": "b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "assigned_at": "2026-09-14T20:53:21.884Z",
+    "unassigned_at": null,
+    "is_current": true,
+    "notes": null
+  },
+  {
+    "id": "1d9c2841-410d-4200-9958-dc8577ff8941",
+    "ticket_id": "1a6b0dba-dddd-41cc-a18b-65b67e72481d",
+    "technician_id": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "assigned_by": "b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "assigned_at": "2026-09-15T06:39:18.496Z",
+    "unassigned_at": null,
+    "is_current": true,
+    "notes": null
+  },
+  {
+    "id": "ac754140-b494-4a48-8187-93a49587bd1f",
+    "ticket_id": "a48c4333-5905-470c-bc54-fc2abbe368cf",
+    "technician_id": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "assigned_by": "b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "assigned_at": "2026-09-18T08:26:26.426Z",
+    "unassigned_at": null,
+    "is_current": true,
+    "notes": null
+  },
+  {
+    "id": "9a80fa11-ae66-487d-b52a-054b6d531db6",
+    "ticket_id": "5763137f-fdb7-4bb5-9836-08ae25125e19",
+    "technician_id": "b2222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "assigned_by": "b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "assigned_at": "2026-09-21T12:26:45.936Z",
+    "unassigned_at": null,
+    "is_current": true,
+    "notes": null
+  }
+]
