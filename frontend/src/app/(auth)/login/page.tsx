@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isWakingUp, setIsWakingUp] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,13 +26,21 @@ export default function LoginPage() {
 
     setError(null);
     setIsLoading(true);
+    setIsWakingUp(false);
+
+    // If server takes longer than 2.5s (e.g. Render free tier waking up), notify the user
+    const wakeTimer = setTimeout(() => {
+      setIsWakingUp(true);
+    }, 2500);
 
     try {
       await login(email, password);
     } catch (err: any) {
       setError(err?.message || 'Authentication failed. Please check your credentials.');
     } finally {
+      clearTimeout(wakeTimer);
       setIsLoading(false);
+      setIsWakingUp(false);
     }
   };
 
@@ -123,7 +132,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col gap-3 pt-2">
+          <CardFooter className="flex flex-col gap-2 pt-2">
             <Button
               type="submit"
               className="w-full h-9 bg-[#6f1a7e] hover:bg-[#561361] text-white font-medium text-sm transition-all"
@@ -132,12 +141,17 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="size-4 mr-2 animate-spin" />
-                  Verifying Credentials...
+                  {isWakingUp ? 'Waking up backend server...' : 'Verifying Credentials...'}
                 </>
               ) : (
                 'Sign In'
               )}
             </Button>
+            {isWakingUp && (
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center animate-pulse">
+                Connecting to cloud server... Cloud instances may take up to 45s on cold start.
+              </p>
+            )}
           </CardFooter>
         </form>
       </Card>

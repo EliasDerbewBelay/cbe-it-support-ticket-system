@@ -52,11 +52,26 @@ export async function apiClient<T = any>(
       headers,
     });
   } catch (err: any) {
-    const errorMsg =
-      err?.message === 'Failed to fetch' || err?.name === 'TypeError'
-        ? `Unable to connect to the backend server at ${url}. Please verify that the API server is running and accessible.`
-        : err?.message || 'Network request failed';
-    throw new ApiError(errorMsg, 0, 'NETWORK_ERROR', err);
+    // If it's a network error (e.g. Render cold start or transient glitch), retry once after a short delay
+    if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        response = await fetch(url, {
+          ...options,
+          headers,
+        });
+      } catch (retryErr: any) {
+        const isRender = url.includes('onrender.com');
+        const errorMsg = `Unable to connect to the backend server at ${url}. ${
+          isRender
+            ? 'The cloud server may be waking up from free-tier sleep (takes ~45 seconds on first boot). Please wait a moment and try again.'
+            : 'Please verify that the API server is running and accessible.'
+        }`;
+        throw new ApiError(errorMsg, 0, 'NETWORK_ERROR', retryErr);
+      }
+    } else {
+      throw new ApiError(err?.message || 'Network request failed', 0, 'NETWORK_ERROR', err);
+    }
   }
 
   let data: any;
