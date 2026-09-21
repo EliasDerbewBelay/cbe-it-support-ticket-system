@@ -45,10 +45,19 @@ export async function apiClient<T = any>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (err: any) {
+    const errorMsg =
+      err?.message === 'Failed to fetch' || err?.name === 'TypeError'
+        ? `Unable to connect to the backend server at ${url}. Please verify that the API server is running and accessible.`
+        : err?.message || 'Network request failed';
+    throw new ApiError(errorMsg, 0, 'NETWORK_ERROR', err);
+  }
 
   let data: any;
   const contentType = response.headers.get('content-type');

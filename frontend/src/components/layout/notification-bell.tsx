@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { notificationApi } from '@/lib/api/notifications';
+import { getToken } from '@/lib/api/client';
 import { NotificationItem, NotificationType } from '@/types/notification';
 import { formatRelativeTime } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -37,26 +38,36 @@ export function NotificationBell() {
 
   // Fetch unread count & initial list
   const loadNotifications = useCallback(async (silent = false) => {
+    // Only attempt to load notifications if user is authenticated with a token
+    const token = getToken();
+    if (!token) return;
+
     if (!silent) setIsLoading(true);
     try {
       const data = await notificationApi.getNotifications({ limit: 30 });
-      setNotifications(data.notifications);
-      setUnreadCount(data.unreadCount);
+      if (data && Array.isArray(data.notifications)) {
+        setNotifications(data.notifications);
+        setUnreadCount(data.unreadCount ?? 0);
 
-      // Trigger sonner toast if unread count increased while active
-      if (
-        previousUnreadRef.current !== 0 &&
-        data.unreadCount > previousUnreadRef.current &&
-        data.notifications.length > 0
-      ) {
-        const latest = data.notifications[0];
-        toast.info(latest.title, {
-          description: latest.message,
-        });
+        // Trigger sonner toast if unread count increased while active
+        if (
+          previousUnreadRef.current !== 0 &&
+          (data.unreadCount ?? 0) > previousUnreadRef.current &&
+          data.notifications.length > 0
+        ) {
+          const latest = data.notifications[0];
+          toast.info(latest.title, {
+            description: latest.message,
+          });
+        }
+        previousUnreadRef.current = data.unreadCount ?? 0;
       }
-      previousUnreadRef.current = data.unreadCount;
-    } catch (err) {
-      console.error('Failed to fetch notifications:', err);
+    } catch (err: any) {
+      if (silent) {
+        console.warn('Background notification poll deferred:', err?.message || err);
+      } else {
+        console.warn('Failed to fetch notifications:', err?.message || err);
+      }
     } finally {
       if (!silent) setIsLoading(false);
     }
