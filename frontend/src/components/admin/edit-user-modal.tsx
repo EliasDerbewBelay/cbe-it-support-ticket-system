@@ -224,24 +224,25 @@ export function EditUserModal({
     e.preventDefault();
     if (!user) return;
 
-    if (!newPassword) {
+    const trimmedPassword = newPassword.trim();
+    if (!trimmedPassword) {
       toast.error('Please enter or generate a new password.');
       return;
     }
 
-    if (newPassword.length < 8) {
+    if (trimmedPassword.length < 8) {
       toast.error('Password must be at least 8 characters long.');
       return;
     }
 
-    if (newPassword !== confirmPassword) {
+    if (trimmedPassword !== confirmPassword.trim()) {
       toast.error('Passwords do not match. Please verify both fields.');
       return;
     }
 
     setIsResettingPassword(true);
     try {
-      await adminApi.resetUserPassword(user.id, newPassword);
+      await adminApi.resetUserPassword(user.id, trimmedPassword);
       const uName = `${user.firstName || (user as any).first_name || ''} ${user.lastName || (user as any).last_name || ''}`.trim() || user.email;
       toast.success(`Password successfully updated for ${uName}.`);
       onUserUpdated();

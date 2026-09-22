@@ -42,9 +42,16 @@ import {
   XCircle,
   Pencil,
   KeyRound,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Copy,
+  Check,
+  ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { EditUserModal } from '@/components/admin/edit-user-modal';
+import { ResetPasswordModal } from '@/components/admin/reset-password-modal';
 
 export default function UsersAdminPage() {
   const { user: currentUser } = useAuth();
@@ -67,17 +74,37 @@ export default function UsersAdminPage() {
     setIsEditOpen(true);
   };
 
-  // Create User Modal
+  // Dedicated Reset Password Modal (for lost/forgotten passwords)
+  const [resetUser, setResetUser] = useState<UserItem | null>(null);
+  const [isResetOpen, setIsResetOpen] = useState(false);
+
+  const handleOpenResetPassword = (user: UserItem) => {
+    setResetUser(user);
+    setIsResetOpen(true);
+  };
+
+  // Create User Modal & Initial Password States
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [password] = useState('Password@123');
+  const [initialPassword, setInitialPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState<UserRole>('EMPLOYEE');
   const [departmentId, setDepartmentId] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+
+  // Post-Creation Handover Dialog States
+  const [createdCredentials, setCreatedCredentials] = useState<{
+    user: UserItem;
+    initialPassword: string;
+  } | null>(null);
+  const [hasCopiedCredentials, setHasCopiedCredentials] = useState(false);
+  const [hasCopiedPasswordOnly, setHasCopiedPasswordOnly] = useState(false);
 
   const departmentItemsMap = useMemo(() => {
     return Object.fromEntries(departments.map((d) => [d.id, d.name]));
@@ -120,20 +147,62 @@ export default function UsersAdminPage() {
 
   const handleToggleActive = async (user: UserItem) => {
     try {
-      const isCurrentlyActive = user.isActive !== undefined ? user.isActive : (user as any).is_active !== false;
+      const isCurrentlyActive =
+        user.isActive !== undefined ? user.isActive : (user as any).is_active !== false;
       const updated = await adminApi.updateUser(user.id, {
         isActive: !isCurrentlyActive,
       });
       const uFirst = updated.firstName || (updated as any).first_name || '';
       const uLast = updated.lastName || (updated as any).last_name || '';
-      const updatedActive = updated.isActive !== undefined ? updated.isActive : (updated as any).is_active !== false;
+      const updatedActive =
+        updated.isActive !== undefined ? updated.isActive : (updated as any).is_active !== false;
       toast.success(
-        `User account ${uFirst} ${uLast}`.trim() + ` ${updatedActive ? 'activated' : 'deactivated'}.`
+        `User account ${uFirst} ${uLast}`.trim() +
+          ` ${updatedActive ? 'activated' : 'deactivated'}.`
       );
       loadData();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to update user status');
     }
+  };
+
+  const handleGenerateInitialPassword = () => {
+    const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lowercase = 'abcdefghijkmnopqrstuvwxyz';
+    const numbers = '23456789';
+    const symbols = '!@#$%^&*';
+    const all = uppercase + lowercase + numbers + symbols;
+
+    const getRandom = (chars: string) => {
+      const arr = new Uint32Array(1);
+      crypto.getRandomValues(arr);
+      return chars[arr[0] % chars.length];
+    };
+
+    const pwd = [
+      getRandom(uppercase),
+      getRandom(lowercase),
+      getRandom(numbers),
+      getRandom(symbols),
+    ];
+
+    for (let i = 4; i < 14; i++) {
+      pwd.push(getRandom(all));
+    }
+
+    for (let i = pwd.length - 1; i > 0; i--) {
+      const arr = new Uint32Array(1);
+      crypto.getRandomValues(arr);
+      const j = arr[0] % (i + 1);
+      [pwd[i], pwd[j]] = [pwd[j], pwd[i]];
+    }
+
+    const result = pwd.join('');
+    setInitialPassword(result);
+    setConfirmPassword(result);
+    setShowPassword(true);
+    setShowConfirmPassword(true);
+    toast.info('Secure initial password generated.');
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -143,13 +212,29 @@ export default function UsersAdminPage() {
       return;
     }
 
+    const trimmedPassword = initialPassword.trim();
+    if (!trimmedPassword) {
+      toast.error('Please specify an initial password for the user.');
+      return;
+    }
+
+    if (trimmedPassword.length < 8) {
+      toast.error('Initial password must be at least 8 characters long.');
+      return;
+    }
+
+    if (trimmedPassword !== confirmPassword.trim()) {
+      toast.error('Initial password and confirmation password do not match.');
+      return;
+    }
+
     setIsCreating(true);
     try {
-      await adminApi.createUser({
+      const createdUser = await adminApi.createUser({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        password,
+        password: trimmedPassword,
         role,
         departmentId,
         employeeId: employeeId.trim() || undefined,
@@ -158,10 +243,21 @@ export default function UsersAdminPage() {
 
       toast.success(`User ${firstName} ${lastName} successfully registered.`);
       setIsCreateOpen(false);
-      // Reset
+
+      // Open credentials handover modal so admin can immediately copy details
+      setCreatedCredentials({
+        user: createdUser,
+        initialPassword: trimmedPassword,
+      });
+
+      // Reset create form
       setFirstName('');
       setLastName('');
       setEmail('');
+      setInitialPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
       setEmployeeId('');
       setPhoneNumber('');
       loadData();
@@ -172,6 +268,55 @@ export default function UsersAdminPage() {
     }
   };
 
+  const handleCopyFullCredentials = async () => {
+    if (!createdCredentials) return;
+    const { user, initialPassword: pwd } = createdCredentials;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const uFirst = user.firstName || (user as any).first_name || '';
+    const uLast = user.lastName || (user as any).last_name || '';
+    const uName = `${uFirst} ${uLast}`.trim() || user.email;
+
+    const summaryText = [
+      '==================================================',
+      'CBE IT Support Ticket System - Account Credentials',
+      '==================================================',
+      `Employee Name:       ${uName}`,
+      `Institutional Email: ${user.email}`,
+      `Staff ID:            ${user.employeeId || 'N/A'}`,
+      `Role:                ${user.role}`,
+      `Department:          ${user.department?.name || 'N/A'}`,
+      `Initial Password:    ${pwd}`,
+      `Login URL:           ${origin}/login`,
+      '==================================================',
+      'Please log in with these initial credentials and update your password.',
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setHasCopiedCredentials(true);
+      toast.success('Account credentials copied to clipboard.');
+      setTimeout(() => setHasCopiedCredentials(false), 3500);
+    } catch {
+      toast.error('Failed to copy to clipboard.');
+    }
+  };
+
+  const handleCopyPasswordOnly = async () => {
+    if (!createdCredentials) return;
+    try {
+      await navigator.clipboard.writeText(createdCredentials.initialPassword);
+      setHasCopiedPasswordOnly(true);
+      toast.success('Initial password copied to clipboard.');
+      setTimeout(() => setHasCopiedPasswordOnly(false), 3000);
+    } catch {
+      toast.error('Failed to copy password.');
+    }
+  };
+
+  const passwordLengthValid = initialPassword.trim().length >= 8;
+  const passwordsMatch =
+    initialPassword.length > 0 && initialPassword.trim() === confirmPassword.trim();
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -179,7 +324,13 @@ export default function UsersAdminPage() {
         description="Manage CBE employee accounts, IT support technicians, and system administrators."
       >
         <Button
-          onClick={() => setIsCreateOpen(true)}
+          onClick={() => {
+            setInitialPassword('');
+            setConfirmPassword('');
+            setShowPassword(false);
+            setShowConfirmPassword(false);
+            setIsCreateOpen(true);
+          }}
           size="sm"
           className="bg-[#6f1a7e] hover:bg-[#561361] text-white text-xs"
         >
@@ -193,7 +344,7 @@ export default function UsersAdminPage() {
         <div className="relative flex-1 w-full sm:max-w-xs">
           <Search className="absolute left-3 top-2.5 size-4 text-zinc-400" />
           <Input
-            placeholder="Search by name or email..."
+            placeholder="Search by name, email, or staff ID..."
             className="pl-9 h-9 text-xs"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -209,7 +360,7 @@ export default function UsersAdminPage() {
             >
               <SelectTrigger className="h-9 text-xs">
                 <SelectValue placeholder="Role">
-                  {(val) => (val && roleLabels[val]) ? roleLabels[val] : 'Role'}
+                  {(val) => (val && roleLabels[val] ? roleLabels[val] : 'Role')}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -227,7 +378,9 @@ export default function UsersAdminPage() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-16">
           <Loader2 className="size-6 animate-spin text-[#6f1a7e]" />
-          <span className="text-xs text-zinc-500 mt-2 font-medium">Loading user accounts...</span>
+          <span className="text-xs text-zinc-500 mt-2 font-medium">
+            Loading user accounts...
+          </span>
         </div>
       ) : (
         <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
@@ -238,8 +391,12 @@ export default function UsersAdminPage() {
                 <TableHead className="w-[140px] text-xs font-semibold">Role</TableHead>
                 <TableHead className="text-xs font-semibold">Department</TableHead>
                 <TableHead className="w-[120px] text-xs font-semibold">Staff ID</TableHead>
-                <TableHead className="w-[100px] text-xs font-semibold text-center">Status</TableHead>
-                <TableHead className="w-[200px] text-xs font-semibold text-right">Actions</TableHead>
+                <TableHead className="w-[100px] text-xs font-semibold text-center">
+                  Status
+                </TableHead>
+                <TableHead className="w-[230px] text-xs font-semibold text-right">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -247,7 +404,8 @@ export default function UsersAdminPage() {
                 const uFirst = u.firstName || (u as any).first_name || '';
                 const uLast = u.lastName || (u as any).last_name || '';
                 const uDisplayName = `${uFirst} ${uLast}`.trim() || u.email;
-                const uActive = u.isActive !== undefined ? u.isActive : (u as any).is_active !== false;
+                const uActive =
+                  u.isActive !== undefined ? u.isActive : (u as any).is_active !== false;
                 const uDept = u.department?.name || 'Unassigned';
                 const uEmpId = u.employeeId || (u as any).employee_id || '—';
 
@@ -298,7 +456,7 @@ export default function UsersAdminPage() {
                           size="xs"
                           onClick={() => handleOpenEdit(u, 'profile')}
                           className="h-7 px-2 text-[11px] font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                          title="Edit profile & email"
+                          title="Edit profile & institutional details"
                         >
                           <Pencil className="size-3 mr-1 text-zinc-500" />
                           Edit
@@ -306,12 +464,12 @@ export default function UsersAdminPage() {
                         <Button
                           variant="outline"
                           size="xs"
-                          onClick={() => handleOpenEdit(u, 'security')}
-                          className="h-7 px-2 text-[11px] font-medium text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60 hover:bg-purple-50 dark:hover:bg-purple-950/20"
-                          title="Manage user password"
+                          onClick={() => handleOpenResetPassword(u)}
+                          className="h-7 px-2 text-[11px] font-medium text-[#6f1a7e] dark:text-[#c477d2] border-purple-200 dark:border-purple-800/60 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                          title="Reset password for user who lost or forgot credentials"
                         >
                           <KeyRound className="size-3 mr-1 text-[#6f1a7e] dark:text-[#c477d2]" />
-                          Password
+                          Reset Password
                         </Button>
                         <Button
                           variant="ghost"
@@ -345,22 +503,22 @@ export default function UsersAdminPage() {
 
       {/* Create User Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="size-8 rounded-lg bg-[#6f1a7e]/10 text-[#6f1a7e] flex items-center justify-center">
+              <div className="size-8 rounded-lg bg-[#6f1a7e]/10 text-[#6f1a7e] flex items-center justify-center shrink-0">
                 <Users className="size-4" />
               </div>
               <div>
                 <DialogTitle className="text-base font-semibold">Create Staff Account</DialogTitle>
                 <DialogDescription className="text-xs">
-                  Register a new branch employee or IS support personnel.
+                  Register a new branch employee or IS support personnel with their initial password.
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <form onSubmit={handleCreateUser} className="space-y-3 pt-2">
+          <form onSubmit={handleCreateUser} className="space-y-3.5 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs font-medium">First Name *</Label>
@@ -401,12 +559,14 @@ export default function UsersAdminPage() {
                 <Label className="text-xs font-medium">Role *</Label>
                 <Select
                   value={role}
-                  onValueChange={(v) => { if (v) setRole(v as UserRole); }}
+                  onValueChange={(v) => {
+                    if (v) setRole(v as UserRole);
+                  }}
                   items={roleLabels}
                 >
                   <SelectTrigger className="text-xs h-8.5">
                     <SelectValue placeholder="Select Role">
-                      {(v) => (v && roleLabels[v]) ? roleLabels[v] : 'Select Role'}
+                      {(v) => (v && roleLabels[v] ? roleLabels[v] : 'Select Role')}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -465,6 +625,108 @@ export default function UsersAdminPage() {
               </div>
             </div>
 
+            {/* Initial Password Section */}
+            <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                    <KeyRound className="size-3.5 text-[#6f1a7e] dark:text-[#c477d2]" />
+                    Initial Password *
+                  </Label>
+                  <p className="text-[11px] text-zinc-500">
+                    Set the user&apos;s starting credentials.
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onClick={handleGenerateInitialPassword}
+                  className="h-7 text-[11px] text-[#6f1a7e] dark:text-[#c477d2] border-purple-200 dark:border-purple-800/80 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100 gap-1"
+                >
+                  <Sparkles className="size-3 text-[#6f1a7e] dark:text-[#c477d2]" />
+                  Generate Strong Password
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      className="text-xs h-8.5 pr-8 font-mono"
+                      value={initialPassword}
+                      onChange={(e) => setInitialPassword(e.target.value)}
+                      placeholder="Min. 8 characters"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      className="text-xs h-8.5 pr-8 font-mono"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm initial password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-2.5 top-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                      title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="size-3.5" />
+                      ) : (
+                        <Eye className="size-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Hints & Status */}
+              <div className="flex items-center justify-between text-[11px] px-2 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800">
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className={`size-1.5 rounded-full ${
+                      passwordLengthValid ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-600'
+                    }`}
+                  />
+                  <span className={passwordLengthValid ? 'text-zinc-700 dark:text-zinc-300 font-medium' : 'text-zinc-400'}>
+                    8+ chars
+                  </span>
+                </div>
+
+                {confirmPassword && (
+                  <div className="flex items-center gap-1">
+                    {passwordsMatch ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                        <Check className="size-3" /> Passwords match
+                      </span>
+                    ) : (
+                      <span className="text-rose-500 font-medium flex items-center gap-1">
+                        Passwords do not match
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <DialogFooter className="gap-2 pt-3">
               <Button
                 type="button"
@@ -478,7 +740,7 @@ export default function UsersAdminPage() {
               <Button
                 type="submit"
                 size="sm"
-                disabled={isCreating}
+                disabled={isCreating || !passwordLengthValid || !passwordsMatch}
                 className="bg-[#6f1a7e] hover:bg-[#561361] text-white"
               >
                 {isCreating ? (
@@ -495,6 +757,139 @@ export default function UsersAdminPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Post-Creation Handover Dialog (Shows credentials to copy for the new user) */}
+      <Dialog
+        open={Boolean(createdCredentials)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreatedCredentials(null);
+            setHasCopiedCredentials(false);
+            setHasCopiedPasswordOnly(false);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <div className="size-8 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="size-4" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-semibold">
+                  Account Created Successfully
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Initial credentials for the new employee account.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {createdCredentials && (
+            <div className="space-y-4 pt-1">
+              {/* Summary Card */}
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-3.5 space-y-2.5 text-xs">
+                <div className="flex justify-between items-center pb-2 border-b border-zinc-200 dark:border-zinc-800">
+                  <span className="text-zinc-500 font-medium">Staff Member:</span>
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                    {createdCredentials.user.firstName} {createdCredentials.user.lastName}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center pb-2 border-b border-zinc-200 dark:border-zinc-800">
+                  <span className="text-zinc-500 font-medium">Login Username / Email:</span>
+                  <span className="font-mono text-zinc-900 dark:text-zinc-100 select-all font-semibold">
+                    {createdCredentials.user.email}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center pb-2 border-b border-zinc-200 dark:border-zinc-800">
+                  <span className="text-zinc-500 font-medium">Department & Role:</span>
+                  <span className="text-zinc-700 dark:text-zinc-300">
+                    {createdCredentials.user.department?.name || 'Assigned'} ({createdCredentials.user.role})
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500 font-medium">Assigned Initial Password:</span>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                      One-time display
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white dark:bg-zinc-950 border border-purple-200 dark:border-purple-800/80 font-mono text-xs">
+                    <span className="text-zinc-900 dark:text-zinc-100 font-bold select-all tracking-wider">
+                      {createdCredentials.initialPassword}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      onClick={handleCopyPasswordOnly}
+                      className="shrink-0 h-6 px-2 text-[11px] text-[#6f1a7e] dark:text-[#c477d2] hover:bg-purple-100 dark:hover:bg-purple-900/40"
+                    >
+                      {hasCopiedPasswordOnly ? (
+                        <>
+                          <Check className="size-3 mr-1 text-emerald-600" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="size-3 mr-1" />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Alert */}
+              <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300">
+                <ShieldAlert className="size-4 shrink-0 mt-0.5 text-amber-600" />
+                <span>
+                  Please securely communicate this initial password to the employee. Plaintext credentials are not stored in the system.
+                </span>
+              </div>
+
+              <DialogFooter className="gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyFullCredentials}
+                  className="text-xs gap-1.5 flex-1"
+                >
+                  {hasCopiedCredentials ? (
+                    <>
+                      <Check className="size-3 text-emerald-600" />
+                      Copied All
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3 text-zinc-500" />
+                      Copy Login Details
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setCreatedCredentials(null);
+                    setHasCopiedCredentials(false);
+                    setHasCopiedPasswordOnly(false);
+                  }}
+                  className="bg-[#6f1a7e] hover:bg-[#561361] text-white text-xs flex-1"
+                >
+                  Done
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Edit User Modal */}
       <EditUserModal
         isOpen={isEditOpen}
@@ -507,6 +902,17 @@ export default function UsersAdminPage() {
         currentUserId={currentUser?.id}
         initialTab={editTab}
         onUserUpdated={loadData}
+      />
+
+      {/* Dedicated Lost / Forgotten Password Reset Modal */}
+      <ResetPasswordModal
+        isOpen={isResetOpen}
+        onClose={() => {
+          setIsResetOpen(false);
+          setResetUser(null);
+        }}
+        user={resetUser}
+        onPasswordReset={loadData}
       />
     </div>
   );

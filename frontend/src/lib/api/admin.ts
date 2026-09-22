@@ -65,7 +65,7 @@ export const adminApi = {
     firstName: string;
     lastName: string;
     email: string;
-    password?: string;
+    password: string;
     role: string;
     departmentId: string;
     employeeId?: string;

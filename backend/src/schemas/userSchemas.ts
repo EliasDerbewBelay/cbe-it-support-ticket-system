@@ -19,7 +19,8 @@ export const createUserSchema = z.object({
     .email('Please enter a valid institutional email address'),
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters'),
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password cannot exceed 100 characters'),
   role: z
     .enum(['EMPLOYEE', 'TECHNICIAN', 'ADMINISTRATOR']),
   departmentId: z
@@ -59,6 +60,7 @@ export const updateUserSchema = z.object({
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password cannot exceed 100 characters')
     .optional()
     .or(z.literal('')),
   phoneNumber: z
@@ -91,7 +93,8 @@ export const updateUserSchema = z.object({
 export const resetPasswordSchema = z.object({
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters'),
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password cannot exceed 100 characters'),
 });
 
 export const userQuerySchema = z.object({

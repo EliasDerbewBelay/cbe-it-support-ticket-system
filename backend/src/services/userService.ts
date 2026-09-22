@@ -185,6 +185,14 @@ export const createUser = async (input: CreateUserInput) => {
     },
   });
 
+  // Post welcome security notification for newly created user
+  await createNotification({
+    userId: newUser.id,
+    title: 'Welcome to CBE IT Support Portal',
+    message: 'Your account has been registered by an administrator. Please keep your login credentials secure.',
+    type: 'INFO',
+  });
+
   return formatUser(newUser);
 };
 
@@ -372,11 +380,12 @@ export const resetUserPassword = async (
     throw new NotFoundError('User not found');
   }
 
-  if (newPassword.length < 8) {
+  const trimmed = newPassword ? newPassword.trim() : '';
+  if (trimmed.length < 8) {
     throw new ValidationError('Password must be at least 8 characters long.');
   }
 
-  const passwordHash = await hashPassword(newPassword);
+  const passwordHash = await hashPassword(trimmed);
 
   await prisma.users.update({
     where: { id: userId },
@@ -388,7 +397,7 @@ export const resetUserPassword = async (
   await createNotification({
     userId,
     title: 'Security Notice: Password Reset',
-    message: 'Your account password has been reset by an administrator.',
+    message: 'Your account password has been reset by an administrator. Please log in using your new credentials.',
     type: 'INFO',
   });
 
